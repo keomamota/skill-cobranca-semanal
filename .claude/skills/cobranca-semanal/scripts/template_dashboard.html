@@ -70,12 +70,18 @@
   header.top .meta { text-align: right; font-size: 13px; color: var(--muted); }
 
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 28px; }
-  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); text-align: left; font: inherit; color: inherit; }
+  .kpi.clickable { cursor: pointer; transition: border-color 0.12s, transform 0.12s; }
+  .kpi.clickable:hover { border-color: var(--accent); }
+  .kpi.clickable:active { transform: translateY(1px); }
+  .kpi.clickable.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow); }
   .kpi .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
   .kpi .value { font-size: 26px; font-weight: 600; }
   .kpi .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
   .kpi .sub.good { color: var(--good); }
   .kpi .sub.crit { color: var(--crit); }
+  .kpi .hint { font-size: 11px; color: var(--accent); margin-top: 6px; opacity: 0; transition: opacity 0.12s; }
+  .kpi.clickable:hover .hint { opacity: 1; }
 
   .charts { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 28px; }
   @media (max-width: 860px) { .charts { grid-template-columns: 1fr; } }
@@ -102,6 +108,15 @@
   .chip-filter { display: flex; gap: 6px; flex-wrap: wrap; }
   .chip-filter button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
   .chip-filter button.active { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+
+  .chips-ativos { display: none; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip-ativo { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-weight: 600; }
+  .chip-ativo.chip-clear-all { background: transparent; border-style: dashed; color: var(--muted); border-color: var(--muted); }
+
+  .proximos-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .proximos-table th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--muted); padding: 8px; border-bottom: 1px solid var(--line); }
+  .proximos-table td { padding: 8px; border-bottom: 1px solid var(--line); }
+  .proximos-table td.num { text-align: right; }
 
   .client-list { display: flex; flex-direction: column; gap: 8px; }
   .client-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
@@ -168,9 +183,16 @@
     <div id="atividade"></div>
   </section>
 
+  <section class="panel" id="painel-proximos">
+    <h2>Vencendo nos próximos 7 dias</h2>
+    <div class="panel-sub">Ainda não vencidos — bom momento para lembrar o cliente antes do atraso</div>
+    <div id="tabela-proximos"></div>
+  </section>
+
   <section class="panel">
     <h2>Clientes inadimplentes — __ANO__</h2>
-    <div class="panel-sub">Agrupado por cliente. Clique para ver os títulos e o histórico de tratativas.</div>
+    <div class="panel-sub">Agrupado por cliente. Clique num cliente para ver os títulos e o histórico de tratativas. Clique nos números acima ou nas barras dos gráficos para filtrar esta lista.</div>
+    <div class="chips-ativos" id="chips-ativos"></div>
     <div class="toolbar">
       <input type="search" id="busca" placeholder="Buscar cliente...">
       <div class="chip-filter" id="filtros"></div>
@@ -203,23 +225,33 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
 
   // ---------- KPIs ----------
   const kpis = data.kpis;
+  const [anoAtual, mesAtualNum] = data.hoje_iso.split("-");
+  const mesAtual = mesAtualNum + "/" + anoAtual;
   const kpiDefs = [
     {
+      kpi: "total-ano",
+      hint: "Clique para ver todos",
       label: "Inadimplência total do ano",
       value: fmtBRL(kpis.inadimplencia_total_ano.valor),
       sub: kpis.inadimplencia_total_ano.qtd_clientes + " clientes · " + kpis.inadimplencia_total_ano.qtd_titulos + " títulos",
     },
     {
+      kpi: "mes-vigente",
+      hint: "Clique para filtrar",
       label: "Inadimplentes do mês vigente",
       value: fmtBRL(kpis.inadimplentes_mes_vigente.valor),
       sub: kpis.inadimplentes_mes_vigente.qtd_titulos + " título(s) vencido(s) este mês",
     },
     {
+      kpi: "vencendo-7-dias",
+      hint: "Clique para ver a lista",
       label: "Vencendo em 7 dias",
       value: fmtBRL(kpis.vencimentos_7_dias.valor),
       sub: kpis.vencimentos_7_dias.qtd_titulos + " título(s) a vencer",
     },
     {
+      kpi: "cobertura",
+      hint: "Clique para ver quem falta contatar",
       label: "Cobertura de contato",
       value: kpis.cobertura_contato_pct.toFixed(0) + "%",
       sub: "clientes com pelo menos 1 tratativa registrada",
@@ -239,11 +271,14 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
     })(),
   ];
   document.getElementById("kpis").innerHTML = kpiDefs.map(k =>
-    '<div class="kpi"><div class="label">' + k.label + '</div><div class="value">' + k.value + '</div><div class="sub ' + (k.subClass || "") + '">' + k.sub + '</div></div>'
+    '<div class="kpi' + (k.kpi ? ' clickable' : '') + '"' + (k.kpi ? ' data-kpi="' + k.kpi + '" tabindex="0" role="button"' : '') + '>' +
+      '<div class="label">' + k.label + '</div><div class="value">' + k.value + '</div><div class="sub ' + (k.subClass || "") + '">' + k.sub + '</div>' +
+      (k.hint ? '<div class="hint">' + k.hint + '</div>' : '') +
+    '</div>'
   ).join("");
 
   // ---------- Bar chart helper ----------
-  function barChart(container, items, { xKey, yKey, colorFor, formatY, height = 220 }) {
+  function barChart(container, items, { xKey, yKey, colorFor, formatY, height = 220, onClick, isSelected }) {
     const w = Math.max(container.clientWidth || 460, items.length * 70);
     const h = height;
     const padL = 64, padB = 34, padT = 10, padR = 10;
@@ -264,7 +299,8 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
       const x = padL + i * bw + bw * 0.18;
       const bw2 = bw * 0.64;
       const y = h - padB - barH;
-      svg += '<rect class="bar-rect" data-i="' + i + '" x="' + x + '" y="' + y + '" width="' + bw2 + '" height="' + Math.max(barH, 2) + '" rx="4" fill="' + colorFor(d, i) + '"></rect>';
+      const selected = isSelected && isSelected(d);
+      svg += '<rect class="bar-rect' + (selected ? ' hover' : '') + '" data-i="' + i + '" x="' + x + '" y="' + y + '" width="' + bw2 + '" height="' + Math.max(barH, 2) + '" rx="4" fill="' + colorFor(d, i) + '"' + (selected ? ' stroke="var(--ink)" stroke-width="2"' : '') + '></rect>';
       svg += '<text class="axis-label" x="' + (x + bw2 / 2) + '" y="' + (h - padB + 16) + '" text-anchor="middle">' + d[xKey] + '</text>';
     });
     svg += '</svg>';
@@ -274,30 +310,79 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
     container.querySelectorAll(".bar-rect").forEach((rect) => {
       const d = items[+rect.dataset.i];
       rect.addEventListener("mousemove", (e) => {
-        tooltip.textContent = d[xKey] + ": " + fmtBRL(d[yKey]) + (d.qtd !== undefined ? " · " + d.qtd + " título(s)" : "");
+        tooltip.textContent = d[xKey] + ": " + fmtBRL(d[yKey]) + (d.qtd !== undefined ? " · " + d.qtd + " título(s)" : "") + (onClick ? " (clique para filtrar)" : "");
         tooltip.style.left = e.clientX + "px";
         tooltip.style.top = e.clientY + "px";
         tooltip.classList.add("show");
       });
       rect.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+      if (onClick) rect.addEventListener("click", () => onClick(d));
     });
   }
 
   const mesesPt = { "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez" };
-  const serieMensal = data.serie_mensal.map(m => ({ ...m, label: mesesPt[m.mes.split("-")[1]] + "/" + m.mes.split("-")[0].slice(2) }));
-  barChart(document.getElementById("chart-mensal"), serieMensal, {
-    xKey: "label", yKey: "valor_original",
-    colorFor: () => "var(--accent)",
-    formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
-  });
 
+  // ---------- Estado de filtro compartilhado (KPIs, graficos, chips de status e busca) ----------
+  let filtros = { status: "Todos", mes: null, aging: null, semContato: false };
+
+  function mesFromData(dataStr) { // "dd/mm/yyyy" -> "mm/yyyy"
+    const p = dataStr.split("/");
+    return p[1] + "/" + p[2];
+  }
+  function labelMes(mesStr) { // "mm/yyyy" -> "Fev/2026"
+    const [mm, yyyy] = mesStr.split("/");
+    return mesesPt[mm] + "/" + yyyy;
+  }
+  function bucketAtraso(dias) {
+    if (dias <= 30) return "1-30 dias";
+    if (dias <= 60) return "31-60 dias";
+    if (dias <= 90) return "61-90 dias";
+    return "90+ dias";
+  }
+  function scrollToList() {
+    document.getElementById("lista-clientes").closest("section").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const serieMensal = data.serie_mensal.map(m => ({ ...m, label: mesesPt[m.mes.split("-")[1]] + "/" + m.mes.split("-")[0].slice(2), mesChave: m.mes.split("-")[1] + "/" + m.mes.split("-")[0] }));
   const agingRamp = ["#E7C27A", "#D99A3D", "#C06B2E", "#B23B33"];
-  barChart(document.getElementById("chart-aging"), data.aging, {
-    xKey: "faixa", yKey: "valor",
-    colorFor: (d, i) => agingRamp[i] || agingRamp[agingRamp.length - 1],
-    formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
-    height: 220,
-  });
+
+  function desenharGraficos() {
+    barChart(document.getElementById("chart-mensal"), serieMensal, {
+      xKey: "label", yKey: "valor_original",
+      colorFor: () => "var(--accent)",
+      formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
+      isSelected: (d) => filtros.mes === d.mesChave,
+      onClick: (d) => {
+        filtros.mes = (filtros.mes === d.mesChave) ? null : d.mesChave;
+        render();
+        scrollToList();
+      },
+    });
+
+    barChart(document.getElementById("chart-aging"), data.aging, {
+      xKey: "faixa", yKey: "valor",
+      colorFor: (d, i) => agingRamp[i] || agingRamp[agingRamp.length - 1],
+      formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
+      height: 220,
+      isSelected: (d) => filtros.aging === d.faixa,
+      onClick: (d) => {
+        filtros.aging = (filtros.aging === d.faixa) ? null : d.faixa;
+        render();
+        scrollToList();
+      },
+    });
+  }
+
+  // ---------- Vencendo nos proximos 7 dias (tabela dedicada, dados individuais por titulo) ----------
+  const proximosEl = document.getElementById("tabela-proximos");
+  if (!data.vencimentos_proximos || data.vencimentos_proximos.length === 0) {
+    proximosEl.innerHTML = '<div class="empty-state">Nenhum título vencendo nos próximos 7 dias.</div>';
+  } else {
+    proximosEl.innerHTML = '<table class="proximos-table"><thead><tr><th>Cliente</th><th class="num">Valor</th><th>Vencimento</th><th></th></tr></thead><tbody>' +
+      data.vencimentos_proximos.map(p =>
+        '<tr><td>' + p.cliente + '</td><td class="num">' + fmtBRL(p.valor_aberto) + '</td><td>' + p.data_vencimento + '</td><td>' + p.extra + '</td></tr>'
+      ).join("") + '</tbody></table>';
+  }
 
   // ---------- Atividade recente ----------
   const atividadeEl = document.getElementById("atividade");
@@ -311,12 +396,12 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
 
   // ---------- Lista de clientes ----------
   const statusList = ["Todos", "Pendente", "Contatado", "Negociando", "Pago", "Sem resposta"];
-  let filtroAtual = "Todos";
   const filtrosEl = document.getElementById("filtros");
   filtrosEl.innerHTML = statusList.map(s => '<button data-s="' + s + '" class="' + (s === "Todos" ? "active" : "") + '">' + s + '</button>').join("");
 
   const listaEl = document.getElementById("lista-clientes");
   const buscaEl = document.getElementById("busca");
+  const chipsAtivosEl = document.getElementById("chips-ativos");
 
   function statusClass(s) {
     return "status-" + (s || "Pendente").replace(/\s+/g, "");
@@ -326,12 +411,39 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
     return window.__SHEET_URL__;
   }
 
+  function renderChipsAtivos() {
+    const chips = [];
+    if (filtros.mes) chips.push({ key: "mes", label: "Mês: " + labelMes(filtros.mes) });
+    if (filtros.aging) chips.push({ key: "aging", label: "Atraso: " + filtros.aging });
+    if (filtros.semContato) chips.push({ key: "semContato", label: "Ainda não contatados" });
+
+    if (!chips.length) {
+      chipsAtivosEl.style.display = "none";
+      chipsAtivosEl.innerHTML = "";
+      return;
+    }
+    chipsAtivosEl.style.display = "flex";
+    chipsAtivosEl.innerHTML = chips.map(c => '<button class="chip-ativo" data-clear="' + c.key + '">' + c.label + ' &times;</button>').join("") +
+      '<button class="chip-ativo chip-clear-all" data-clear="all">Limpar filtros</button>';
+  }
+
   function render() {
     const termo = buscaEl.value.trim().toLowerCase();
     const clientes = data.clientes.filter(c => {
-      if (filtroAtual !== "Todos" && c.status_atual !== filtroAtual) return false;
+      if (filtros.status !== "Todos" && c.status_atual !== filtros.status) return false;
       if (termo && !c.cliente.toLowerCase().includes(termo)) return false;
+      if (filtros.mes && !c.titulos.some(t => mesFromData(t.data_vencimento) === filtros.mes)) return false;
+      if (filtros.aging && !c.titulos.some(t => bucketAtraso(t.dias_atraso) === filtros.aging)) return false;
+      if (filtros.semContato && c.tratativas.length > 0) return false;
       return true;
+    });
+
+    renderChipsAtivos();
+    desenharGraficos();
+    document.querySelectorAll("#kpis .kpi[data-kpi]").forEach(el => {
+      const k = el.dataset.kpi;
+      const selected = (k === "mes-vigente" && filtros.mes === mesAtual) || (k === "cobertura" && filtros.semContato);
+      el.classList.toggle("selected", selected);
     });
 
     if (clientes.length === 0) {
@@ -374,11 +486,46 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
   filtrosEl.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
-    filtroAtual = btn.dataset.s;
+    filtros.status = btn.dataset.s;
     filtrosEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
     render();
   });
   buscaEl.addEventListener("input", render);
+
+  chipsAtivosEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-clear]");
+    if (!btn) return;
+    const k = btn.dataset.clear;
+    if (k === "all") { filtros.mes = null; filtros.aging = null; filtros.semContato = false; }
+    else if (k === "mes") filtros.mes = null;
+    else if (k === "aging") filtros.aging = null;
+    else if (k === "semContato") filtros.semContato = false;
+    render();
+  });
+
+  document.getElementById("kpis").addEventListener("click", (e) => {
+    const card = e.target.closest("[data-kpi]");
+    if (!card) return;
+    const k = card.dataset.kpi;
+    if (k === "total-ano") {
+      filtros = { status: "Todos", mes: null, aging: null, semContato: false };
+      buscaEl.value = "";
+      filtrosEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.s === "Todos"));
+      render();
+      scrollToList();
+    } else if (k === "mes-vigente") {
+      filtros.mes = (filtros.mes === mesAtual) ? null : mesAtual;
+      render();
+      scrollToList();
+    } else if (k === "vencendo-7-dias") {
+      document.getElementById("painel-proximos").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (k === "cobertura") {
+      filtros.semContato = !filtros.semContato;
+      render();
+      scrollToList();
+    }
+  });
+
   listaEl.addEventListener("click", (e) => {
     const copyBtn = e.target.closest("[data-copy]");
     if (copyBtn) {
