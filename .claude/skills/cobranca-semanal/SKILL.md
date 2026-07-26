@@ -98,12 +98,17 @@ planilha e o "banco de dados" real, e o painel e sempre uma leitura (regenerado 
    ```bash
    python3 ".claude/skills/cobranca-semanal/scripts/build_dashboard_html.py" \
      "relatorios/dashboard_data_YYYY-MM-DD.json" "relatorios" \
-     "1Y0mq4JIk-tS0JftosgHplGYzOAwDsG09uMcVLnitTl8" "<gid_da_aba_tratativas>"
+     "1Y0mq4JIk-tS0JftosgHplGYzOAwDsG09uMcVLnitTl8" "<gid_da_aba_tratativas>" \
+     "11.084.977/0001-50" "Nobre Lar"
    ```
 
    O gid da aba "Tratativas" e `786917158` (confirmado com o usuario) — so pergunte de novo se a
-   aba for recriada e o gid mudar. Isso gera `relatorios/painel_cobranca_YYYY-MM-DD.html`, um
-   arquivo HTML autocontido (sem dependencias externas, CSP-safe).
+   aba for recriada e o gid mudar. Os dois ultimos argumentos (chave PIX e nome do beneficiario)
+   sao opcionais — se omitidos, o script usa os valores padrao acima (ja confirmados com o
+   usuario). Isso gera `relatorios/painel_cobranca_YYYY-MM-DD.html`, um arquivo HTML autocontido
+   (sem dependencias externas, CSP-safe), com botao "Chamar no WhatsApp" por cliente (quando ha
+   telefone cadastrado em db_clientes) trazendo uma mensagem pronta com valor da divida e a chave
+   PIX, para o cliente conseguir pagar na hora, nao so "abrir uma conversa".
 
 4. **Publicar o painel** com a ferramenta Artifact — **o link precisa ser o mesmo todo mes/semana**
    (a funcionaria e a diretora vao favoritar esse link, ele nao pode mudar a cada execucao).

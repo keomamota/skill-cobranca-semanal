@@ -212,6 +212,8 @@
 <script>
 window.__DASHBOARD_DATA__ = __DASHBOARD_DATA_JSON__;
 window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
+window.__PIX_CHAVE__ = "__PIX_CHAVE_VALUE__";
+window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
 (function () {
   const data = window.__DASHBOARD_DATA__;
@@ -461,9 +463,15 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
         : '<div class="empty-state">Nenhuma tratativa registrada ainda para este cliente.</div>';
 
       const numeroWhats = c.whatsapp_principal || c.whatsapp_secundario;
-      const mensagem = "Olá " + c.cliente.split(" ")[0].charAt(0) + c.cliente.split(" ")[0].slice(1).toLowerCase() +
-        ", tudo bem? Aqui é da Nobre Lar. Identificamos um débito em aberto de " + fmtBRL(c.total_aberto) +
-        " (vencido há " + piorAtraso + " dia(s)). Podemos combinar a regularização?";
+      const primeiroNome = c.cliente.split(" ")[0];
+      const primeiroNomeCap = primeiroNome.charAt(0) + primeiroNome.slice(1).toLowerCase();
+      const mensagem = "Olá " + primeiroNomeCap + ", tudo bem? Aqui é da Nobre Lar.\n\n" +
+        "Identificamos um débito em aberto de *" + fmtBRL(c.total_aberto) + "* (vencido há " + piorAtraso + " dia(s)).\n\n" +
+        "Para regularizar agora, você pode fazer o PIX abaixo:\n" +
+        "Chave PIX (CNPJ): " + window.__PIX_CHAVE__ + "\n" +
+        "Beneficiário: " + window.__PIX_BENEFICIARIO__ + "\n" +
+        "Valor: " + fmtBRL(c.total_aberto) + "\n\n" +
+        "Depois de pagar, nos envie o comprovante por aqui mesmo que já damos baixa. Qualquer dúvida, é só chamar!";
       const btnWhats = numeroWhats
         ? '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://wa.me/' + numeroWhats + '?text=' + encodeURIComponent(mensagem) + '">Chamar no WhatsApp</a>'
         : '<span class="btn btn-ghost" style="cursor:default;opacity:0.6;">Sem telefone cadastrado</span>';
