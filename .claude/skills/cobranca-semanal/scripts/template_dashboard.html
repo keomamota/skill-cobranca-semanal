@@ -1,39 +1,49 @@
 <meta charset="utf-8">
 <title>Painel de Cobrança — Nobre Lar</title>
 <style>
+  /* Paleta Nobre Lar: dourado/amarelo da marca (#F2C10E) como accent + preto como
+     ink primario. accent-ink = texto sobre o accent (sempre escuro, o amarelo e
+     claro demais pra texto em qualquer tema). accent-text = o mesmo matiz dourado
+     mas escurecido/clareado o suficiente pra servir de TEXTO sobre a superficie
+     normal (nao sobre o proprio accent) - amarelo puro como texto pequeno falha
+     contraste tanto no claro quanto no escuro. */
   :root {
-    --ink: #16231F;
-    --muted: #55655F;
-    --paper: #F1F3EE;
+    --ink: #17140A;
+    --muted: #6B6353;
+    --paper: #FBF9F2;
     --surface: #FFFFFF;
-    --surface-2: #E9ECE6;
-    --line: #D7DCD3;
-    --accent: #1F5C55;
-    --accent-soft: #DCEAE6;
+    --surface-2: #F1EEE1;
+    --line: #E3DEC9;
+    --accent: #F2C10E;
+    --accent-ink: #171308;
+    --accent-text: #8A6408;
+    --accent-soft: #FCEEB4;
     --good: #2E7D4F;
     --good-soft: #E1F0E5;
-    --warn: #B9791F;
-    --warn-soft: #F6E9D3;
+    --warn: #C1571A;
+    --warn-soft: #F6DFC9;
     --crit: #B23B33;
     --crit-soft: #F5DEDB;
     --info: #3B6FA0;
     --info-soft: #DCE7F1;
-    --shadow: 0 1px 2px rgba(20, 30, 26, 0.06), 0 6px 20px -8px rgba(20, 30, 26, 0.18);
+    --shadow: 0 1px 2px rgba(23, 20, 10, 0.06), 0 6px 20px -8px rgba(23, 20, 10, 0.18);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --ink: #E7EEEC;
-      --muted: #9AACA4;
-      --paper: #10151A;
-      --surface: #182220;
-      --surface-2: #1E2B27;
-      --line: #2A3733;
-      --accent: #55C2B8;
-      --accent-soft: #1D3C38;
+      --ink: #F2EEDF;
+      --muted: #B3AA90;
+      --paper: #14120B;
+      --surface: #1E1B10;
+      --surface-2: #26210F;
+      --line: #372F19;
+      --accent: #F2C10E;
+      --accent-ink: #171308;
+      --accent-text: #F7D65C;
+      --accent-soft: #3A300D;
       --good: #4CAE73;
       --good-soft: #1B3527;
-      --warn: #D99A3D;
-      --warn-soft: #3A2E17;
+      --warn: #E07A2E;
+      --warn-soft: #3D2712;
       --crit: #E0685F;
       --crit-soft: #3C2220;
       --info: #6FA8D8;
@@ -42,14 +52,16 @@
     }
   }
   :root[data-theme="dark"] {
-    --ink: #E7EEEC; --muted: #9AACA4; --paper: #10151A; --surface: #182220; --surface-2: #1E2B27;
-    --line: #2A3733; --accent: #55C2B8; --accent-soft: #1D3C38; --good: #4CAE73; --good-soft: #1B3527;
-    --warn: #D99A3D; --warn-soft: #3A2E17; --crit: #E0685F; --crit-soft: #3C2220; --info: #6FA8D8; --info-soft: #1C2E3C;
+    --ink: #F2EEDF; --muted: #B3AA90; --paper: #14120B; --surface: #1E1B10; --surface-2: #26210F;
+    --line: #372F19; --accent: #F2C10E; --accent-ink: #171308; --accent-text: #F7D65C; --accent-soft: #3A300D;
+    --good: #4CAE73; --good-soft: #1B3527; --warn: #E07A2E; --warn-soft: #3D2712;
+    --crit: #E0685F; --crit-soft: #3C2220; --info: #6FA8D8; --info-soft: #1C2E3C;
   }
   :root[data-theme="light"] {
-    --ink: #16231F; --muted: #55655F; --paper: #F1F3EE; --surface: #FFFFFF; --surface-2: #E9ECE6;
-    --line: #D7DCD3; --accent: #1F5C55; --accent-soft: #DCEAE6; --good: #2E7D4F; --good-soft: #E1F0E5;
-    --warn: #B9791F; --warn-soft: #F6E9D3; --crit: #B23B33; --crit-soft: #F5DEDB; --info: #3B6FA0; --info-soft: #DCE7F1;
+    --ink: #17140A; --muted: #6B6353; --paper: #FBF9F2; --surface: #FFFFFF; --surface-2: #F1EEE1;
+    --line: #E3DEC9; --accent: #F2C10E; --accent-ink: #171308; --accent-text: #8A6408; --accent-soft: #FCEEB4;
+    --good: #2E7D4F; --good-soft: #E1F0E5; --warn: #C1571A; --warn-soft: #F6DFC9;
+    --crit: #B23B33; --crit-soft: #F5DEDB; --info: #3B6FA0; --info-soft: #DCE7F1;
   }
 
   * { box-sizing: border-box; }
@@ -64,9 +76,11 @@
   h1, h2, h3 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; text-wrap: balance; margin: 0; }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
 
+  body { border-top: 6px solid var(--accent); }
   header.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
-  header.top .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  header.top .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; color: var(--accent-text); margin-bottom: 6px; font-weight: 700; }
   header.top h1 { font-size: 28px; }
+  header.top h1 .lar { color: var(--accent-text); }
   header.top .meta { text-align: right; font-size: 13px; color: var(--muted); }
 
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 28px; }
@@ -80,7 +94,7 @@
   .kpi .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
   .kpi .sub.good { color: var(--good); }
   .kpi .sub.crit { color: var(--crit); }
-  .kpi .hint { font-size: 11px; color: var(--accent); margin-top: 6px; opacity: 0; transition: opacity 0.12s; }
+  .kpi .hint { font-size: 11px; color: var(--accent-text); margin-top: 6px; opacity: 0; transition: opacity 0.12s; }
   .kpi.clickable:hover .hint { opacity: 1; }
 
   .charts { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 28px; }
@@ -107,10 +121,10 @@
   .toolbar input[type="search"] { flex: 1; min-width: 200px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; }
   .chip-filter { display: flex; gap: 6px; flex-wrap: wrap; }
   .chip-filter button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
-  .chip-filter button.active { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .chip-filter button.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
   .chips-ativos { display: none; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  .chip-ativo { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-weight: 600; }
+  .chip-ativo { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-text); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-weight: 600; }
   .chip-ativo.chip-clear-all { background: transparent; border-style: dashed; color: var(--muted); border-color: var(--muted); }
 
   .proximos-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -141,7 +155,7 @@
   .titulos-table td.num { text-align: right; }
   .actions-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
   .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
-  .btn-primary { background: var(--accent); color: var(--paper); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
   .btn-ghost { background: var(--surface-2); color: var(--ink); border-color: var(--line); }
   .btn-ghost:active { transform: translateY(1px); }
   .hist { display: flex; flex-direction: column; gap: 8px; }
@@ -157,7 +171,7 @@
   <header class="top">
     <div>
       <div class="eyebrow">Cobrança &amp; Recuperação de Crédito</div>
-      <h1>Painel de Cobrança — Nobre Lar</h1>
+      <h1>Painel de Cobrança — <span class="lar">Nobre Lar</span></h1>
     </div>
     <div class="meta">Gerado em __DATA_GERACAO__<br>Fonte: aba "Contas a Receber" + "Tratativas" (Google Sheets)</div>
   </header>
@@ -346,7 +360,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
   }
 
   const serieMensal = data.serie_mensal.map(m => ({ ...m, label: mesesPt[m.mes.split("-")[1]] + "/" + m.mes.split("-")[0].slice(2), mesChave: m.mes.split("-")[1] + "/" + m.mes.split("-")[0] }));
-  const agingRamp = ["#E7C27A", "#D99A3D", "#C06B2E", "#B23B33"];
+  const agingRamp = ["#E8A33D", "#D97F2E", "#C2551F", "#A82E27"];
 
   function desenharGraficos() {
     barChart(document.getElementById("chart-mensal"), serieMensal, {
