@@ -364,7 +364,9 @@ def main():
         c = clientes_map.setdefault(r["cliente"], {"cliente": r["cliente"], "total_aberto": 0.0, "titulos": []})
         c["total_aberto"] += r["valor_aberto"]
         c["titulos"].append({
+            "data_emissao": r["data_emissao"],
             "data_vencimento": r["data_vencimento"].strftime("%d/%m/%Y"),
+            "valor_original": r["valor_original"],
             "valor_aberto": r["valor_aberto"],
             "dias_atraso": r["dias_atraso"],
         })

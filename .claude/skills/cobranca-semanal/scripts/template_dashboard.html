@@ -456,8 +456,11 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     listaEl.innerHTML = clientes.map((c, idx) => {
       const piorAtraso = Math.max(...c.titulos.map(t => t.dias_atraso));
       const titulosRows = c.titulos.map(t =>
-        '<tr><td>' + t.data_vencimento + '</td><td class="num">' + fmtBRL(t.valor_aberto) + '</td><td class="num">' + t.dias_atraso + ' dia(s)</td></tr>'
+        '<tr><td>' + t.data_emissao + '</td><td>' + t.data_vencimento + '</td><td class="num">' + fmtBRL(t.valor_aberto) + '</td><td class="num">' + t.dias_atraso + ' dia(s)</td></tr>'
       ).join("");
+      const titulosLista = c.titulos.map(t =>
+        "• Compra em " + t.data_emissao + " — " + fmtBRL(t.valor_aberto) + " (venceu " + t.data_vencimento + ", " + t.dias_atraso + " dia(s) em atraso)"
+      ).join("\n");
       const histItems = c.tratativas.length
         ? c.tratativas.map(t => '<div class="hist-item"><div class="hist-meta">' + t.data + (t.autor ? " · " + t.autor : "") + " · " + t.status + '</div>' + (t.nota || "<em>(sem observação)</em>") + '</div>').join("")
         : '<div class="empty-state">Nenhuma tratativa registrada ainda para este cliente.</div>';
@@ -466,7 +469,8 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       const primeiroNome = c.cliente.split(" ")[0];
       const primeiroNomeCap = primeiroNome.charAt(0) + primeiroNome.slice(1).toLowerCase();
       const mensagem = "Olá " + primeiroNomeCap + ", tudo bem? Aqui é da Nobre Lar.\n\n" +
-        "Identificamos um débito em aberto de *" + fmtBRL(c.total_aberto) + "* (vencido há " + piorAtraso + " dia(s)).\n\n" +
+        "Identificamos os seguintes débitos em aberto:\n" + titulosLista + "\n\n" +
+        "Total: *" + fmtBRL(c.total_aberto) + "*\n\n" +
         "Para regularizar agora, você pode fazer o PIX abaixo:\n" +
         "Chave PIX (CNPJ): " + window.__PIX_CHAVE__ + "\n" +
         "Beneficiário: " + window.__PIX_BENEFICIARIO__ + "\n" +
@@ -488,7 +492,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
             '<span class="chevron">&#9656;</span>' +
           '</div>' +
           '<div class="client-detail">' +
-            '<table class="titulos-table"><thead><tr><th>Vencimento</th><th class="num">Saldo</th><th class="num">Atraso</th></tr></thead><tbody>' + titulosRows + '</tbody></table>' +
+            '<table class="titulos-table"><thead><tr><th>Compra</th><th>Vencimento</th><th class="num">Saldo</th><th class="num">Atraso</th></tr></thead><tbody>' + titulosRows + '</tbody></table>' +
             '<div class="actions-row">' +
               btnWhats +
               '<a class="btn btn-primary" target="_blank" rel="noopener" href="' + sheetLinkFor(c.cliente) + '">Registrar tratativa na planilha</a>' +
