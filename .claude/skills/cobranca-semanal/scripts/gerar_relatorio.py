@@ -1,11 +1,24 @@
 #!/usr/bin/env python3
 """
-Extrai da planilha Google Sheets do Nobre Lar os dados para o painel de cobranca:
-  - Aba "Contas a Receber": titulos (data emissao, cliente, valor original, valor em
-    aberto, data de vencimento), organizados em blocos de 5 colunas (um bloco por mes
-    de vencimento).
+Extrai da planilha Google Sheets do Nobre Lar (arquivo .xlsx baixado por completo -
+ver observacao abaixo) os dados para o painel de cobranca:
+  - Aba "db_contasareceber": titulos (data emissao, cliente, valor original, valor em
+    aberto, data de vencimento, mes, ano). Essa e a fonte "crua" e completa - a aba
+    visual "Contas a Receber" e so um relatorio formatado a partir dela e nao deve
+    ser usada como fonte.
+  - Aba "db_clientes": cadastro de clientes (telefone, vendedor, endereco).
   - Aba "Tratativas": historico de contatos de cobranca (Data, Cliente, Status,
     Tratativa, Autor), preenchida manualmente pela equipe direto no Google Sheets.
+
+IMPORTANTE sobre a fonte dos dados: a ferramenta de leitura "read_file_content" do
+Google Drive converte a planilha inteira pra texto markdown e trunca em ~100-110
+linhas por tabela - isso e insuficiente pra db_clientes (quase 5 mil linhas) e ate
+pra db_contasareceber em planilhas maiores. Por isso este script le um arquivo .xlsx
+baixado por completo (ver passo 1 do SKILL.md: "download_file_content" com
+exportMimeType da planilha, decodificar o base64 e salvar como .xlsx antes de
+chamar este script) e usa openpyxl para ler os valores exatos das celulas, sem
+limite de linhas e sem os problemas de alinhamento de cabecalho que a conversao
+pra texto causava.
 
 Gera:
   - 3 CSVs de apoio (inadimplentes do mes, vencimentos 7 dias, inadimplencia total do
@@ -16,11 +29,10 @@ Gera:
     execucao, para calcular a variacao semana a semana.
 
 Uso:
-    python3 gerar_relatorio.py <caminho_json_fileContent> <pasta_saida> [YYYY-MM-DD]
+    python3 gerar_relatorio.py <caminho_arquivo.xlsx> <pasta_saida> [YYYY-MM-DD]
 
-O <caminho_json_fileContent> e o arquivo .txt/.json salvo pela ferramenta de leitura do
-Google Drive (campo top-level "fileContent"). O terceiro argumento opcional forca a data
-de "hoje" (default: data atual do sistema) - util para testes.
+O terceiro argumento opcional forca a data de "hoje" (default: data atual do
+sistema) - util para testes.
 """
 import sys
 import os
@@ -28,16 +40,17 @@ import json
 import csv
 from datetime import date, datetime, timedelta
 
-HEADER_RECEBER = "| DATA DE EMISSÃO | CLIENTES | VALOR ORIGINAL | VALOR EM ABERTO | DATA DE VENCIMENTO |"
-HEADER_TRATATIVAS = "| Data | Cliente | Status | Tratativa | Autor |"
+import openpyxl
+
+SHEET_CONTAS_A_RECEBER = "db_contasareceber"
+SHEET_TRATATIVAS = "Tratativas"
+SHEET_DB_CLIENTES = "db_clientes"
 
 # aba db_clientes: estrutura confirmada em 26/07/2026 (23 colunas, cabecalho bate
-# 1-para-1 com os dados desta vez — confirmado cruzando "Proximo aniversario" com
-# "Data de nascimento" em varias linhas, mesmo dia/mes). Nao ha mais coluna de
-# telefone secundario nesta versao da aba. Se a planilha mudar de novo, reconfirme
-# posicao por posicao (comparando o VALOR de cada coluna, nao so o texto do
-# cabecalho) antes de usar.
-HEADER_DB_CLIENTES_PREFIXO = "| \\# | Tipo | Código | CNPJ/CPF | Nome | Telefone principal |"
+# 1-para-1 com os dados). Se a planilha mudar de estrutura, reconfirme posicao por
+# posicao (comparando o VALOR de cada coluna - ex: "Proximo aniversario" tem que
+# bater o dia/mes com "Data de nascimento" - e nao so o texto do cabecalho) antes
+# de usar essas posicoes.
 POS_CLIENTE_NOME = 4
 POS_CLIENTE_TEL_PRINCIPAL = 5
 POS_CLIENTE_CIDADE = 15
@@ -46,73 +59,67 @@ POS_CLIENTE_BAIRRO = 17
 POS_CLIENTE_VENDEDOR = 18
 POS_CLIENTE_ENDERECO = 19
 POS_CLIENTE_TEL_SECUNDARIO = None
-N_COLUNAS_DB_CLIENTES = 23
 
 
-def parse_valor(raw):
-    raw = raw.strip().replace("R$", "").strip()
-    raw = raw.replace(".", "").replace(",", ".")
+def parse_valor(v):
+    """Aceita tanto numeros nativos do Excel quanto texto formatado (ex: 'R$ 1.234,56')."""
+    if v is None:
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    v = str(v).strip().replace("R$", "").strip()
+    v = v.replace(".", "").replace(",", ".")
     try:
-        return float(raw)
+        return float(v)
     except ValueError:
         return None
 
 
-def parse_data(raw):
-    raw = raw.strip()
+def parse_data(v):
+    """Aceita tanto datetime/date nativos do Excel quanto texto (dd/mm/yyyy)."""
+    if v is None:
+        return None
+    if isinstance(v, datetime):
+        return v.date()
+    if isinstance(v, date):
+        return v
+    v = str(v).strip()
     for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
         try:
-            return datetime.strptime(raw, fmt).date()
+            return datetime.strptime(v, fmt).date()
         except ValueError:
             continue
     return None
 
 
-def _blocos(linhas, header, n_colunas):
-    """Generator: percorre blocos de tabela markdown que comecam com `header`,
-    devolvendo cada linha de dados ja quebrada em `n_colunas` campos (sem as
-    bordas vazias do markdown)."""
-    i = 0
-    while i < len(linhas):
-        if linhas[i].strip() == header:
-            j = i + 1
-            while j < len(linhas):
-                l = linhas[j].strip()
-                if not l.startswith("|"):
-                    break
-                partes = [p.strip() for p in l.split("|")]
-                if len(partes) != n_colunas + 2:
-                    j += 1
-                    if l.replace("|", "").strip() == "":
-                        continue
-                    else:
-                        break
-                yield partes[1:-1]
-                j += 1
-            i = j
-        else:
-            i += 1
+def _linhas_planilha(wb, nome_aba):
+    ws = wb[nome_aba]
+    linhas = ws.iter_rows(values_only=True)
+    next(linhas, None)  # pula o cabecalho
+    return linhas
 
 
-def extrair_contas_a_receber(content):
-    linhas = content.split("\n")
+def extrair_contas_a_receber(wb):
     registros = []
     vistos = set()
-    for data_emissao, cliente, valor_orig, valor_aberto, data_venc in _blocos(linhas, HEADER_RECEBER, 5):
-        d_venc = parse_data(data_venc)
+    for row in _linhas_planilha(wb, SHEET_CONTAS_A_RECEBER):
+        data_emissao_raw, cliente, valor_orig_raw, valor_aberto_raw, data_venc_raw = row[:5]
+        d_venc = parse_data(data_venc_raw)
         if not cliente or d_venc is None:
             continue
-        v_orig = parse_valor(valor_orig)
-        v_aberto = parse_valor(valor_aberto)
+        v_orig = parse_valor(valor_orig_raw)
+        v_aberto = parse_valor(valor_aberto_raw)
         if v_aberto is None:
             continue
-        chave = (data_emissao, cliente, valor_orig, data_venc)
+        d_emissao = parse_data(data_emissao_raw)
+        data_emissao_str = d_emissao.strftime("%d/%m/%Y") if d_emissao else str(data_emissao_raw or "")
+        chave = (data_emissao_str, cliente, v_orig, d_venc)
         if chave in vistos:
             continue
         vistos.add(chave)
         registros.append({
             "cliente": cliente,
-            "data_emissao": data_emissao,
+            "data_emissao": data_emissao_str,
             "valor_original": v_orig,
             "valor_aberto": v_aberto,
             "data_vencimento": d_venc,
@@ -129,7 +136,7 @@ def telefone_whatsapp(raw):
     Retorna None se o campo estiver vazio/for um traco (sem telefone)."""
     if not raw:
         return None
-    raw = raw.strip()
+    raw = str(raw).strip()
     if raw in ("", "-", "\\-", "—"):
         return None
     digitos = "".join(ch for ch in raw if ch.isdigit())
@@ -140,53 +147,38 @@ def telefone_whatsapp(raw):
     return digitos
 
 
-def extrair_db_clientes(content):
-    """Le a aba db_clientes. Ver comentario acima de HEADER_DB_CLIENTES_PREFIXO sobre
-    por que usamos posicoes fixas confirmadas por valor, em vez do texto do cabecalho."""
-    linhas = content.split("\n")
+def extrair_db_clientes(wb):
     clientes = {}
-    i = 0
-    while i < len(linhas):
-        if linhas[i].strip().startswith(HEADER_DB_CLIENTES_PREFIXO):
-            j = i + 1
-            while j < len(linhas):
-                l = linhas[j].strip()
-                if not l.startswith("|"):
-                    break
-                partes = [p.strip() for p in l.split("|")][1:-1]
-                if len(partes) != N_COLUNAS_DB_CLIENTES or not partes[0].isdigit():
-                    j += 1
-                    if l.replace("|", "").strip() == "":
-                        continue
-                    else:
-                        break
-                nome = partes[POS_CLIENTE_NOME]
-                tel_secundario = partes[POS_CLIENTE_TEL_SECUNDARIO] if POS_CLIENTE_TEL_SECUNDARIO is not None else ""
-                if nome:
-                    clientes[normaliza_nome(nome)] = {
-                        "nome": nome,
-                        "telefone_principal": partes[POS_CLIENTE_TEL_PRINCIPAL],
-                        "telefone_secundario": tel_secundario,
-                        "whatsapp_principal": telefone_whatsapp(partes[POS_CLIENTE_TEL_PRINCIPAL]),
-                        "whatsapp_secundario": telefone_whatsapp(tel_secundario),
-                        "vendedor": partes[POS_CLIENTE_VENDEDOR] or None,
-                        "cidade": partes[POS_CLIENTE_CIDADE],
-                        "estado": partes[POS_CLIENTE_ESTADO],
-                        "bairro": partes[POS_CLIENTE_BAIRRO],
-                        "endereco": partes[POS_CLIENTE_ENDERECO],
-                    }
-                j += 1
-            i = j
-        else:
-            i += 1
+    for row in _linhas_planilha(wb, SHEET_DB_CLIENTES):
+        if row is None or len(row) <= POS_CLIENTE_ENDERECO:
+            continue
+        nome = row[POS_CLIENTE_NOME]
+        if not nome:
+            continue
+        tel_principal = row[POS_CLIENTE_TEL_PRINCIPAL]
+        tel_secundario = row[POS_CLIENTE_TEL_SECUNDARIO] if POS_CLIENTE_TEL_SECUNDARIO is not None else None
+        clientes[normaliza_nome(str(nome))] = {
+            "nome": str(nome),
+            "telefone_principal": tel_principal,
+            "telefone_secundario": tel_secundario,
+            "whatsapp_principal": telefone_whatsapp(tel_principal),
+            "whatsapp_secundario": telefone_whatsapp(tel_secundario),
+            "vendedor": row[POS_CLIENTE_VENDEDOR] or None,
+            "cidade": row[POS_CLIENTE_CIDADE],
+            "estado": row[POS_CLIENTE_ESTADO],
+            "bairro": row[POS_CLIENTE_BAIRRO],
+            "endereco": row[POS_CLIENTE_ENDERECO],
+        }
     return clientes
 
 
-def extrair_tratativas(content):
-    linhas = content.split("\n")
+def extrair_tratativas(wb):
     tratativas = []
-    for data_str, cliente, status, nota, autor in _blocos(linhas, HEADER_TRATATIVAS, 5):
-        d = parse_data(data_str)
+    for row in _linhas_planilha(wb, SHEET_TRATATIVAS):
+        if row is None or len(row) < 5:
+            continue
+        data_raw, cliente, status, nota, autor = row[:5]
+        d = parse_data(data_raw)
         if not cliente or d is None:
             continue
         tratativas.append({
@@ -280,22 +272,20 @@ def atualiza_historico(saida_dir, hoje, total_ano, qtd_clientes_ano):
 
 def main():
     if len(sys.argv) < 3:
-        print("Uso: gerar_relatorio.py <json_fileContent> <pasta_saida> [YYYY-MM-DD]", file=sys.stderr)
+        print("Uso: gerar_relatorio.py <arquivo.xlsx> <pasta_saida> [YYYY-MM-DD]", file=sys.stderr)
         sys.exit(1)
 
-    json_path = sys.argv[1]
+    xlsx_path = sys.argv[1]
     saida_dir = sys.argv[2]
     hoje = date.today()
     if len(sys.argv) > 3:
         hoje = datetime.strptime(sys.argv[3], "%Y-%m-%d").date()
 
-    with open(json_path, encoding="utf-8") as f:
-        data = json.load(f)
-    content = data["fileContent"]
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
 
-    registros = extrair_contas_a_receber(content)
-    tratativas = extrair_tratativas(content)
-    db_clientes = extrair_db_clientes(content)
+    registros = extrair_contas_a_receber(wb)
+    tratativas = extrair_tratativas(wb)
+    db_clientes = extrair_db_clientes(wb)
 
     inadimplentes = []
     proximos = []

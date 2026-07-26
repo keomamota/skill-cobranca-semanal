@@ -23,18 +23,15 @@ Gera um painel HTML de cobranca e tres relatorios CSV de apoio a partir da plani
 
 ## db_clientes (telefone e vendedor)
 
-A aba **"db_clientes"** tem o cadastro de clientes (telefone, vendedor responsavel, endereco).
-O cabecalho de texto dessa aba **nao bate 1-para-1 com o conteudo real das colunas** (parece
-ter sido editada manualmente ao longo do tempo) — as posicoes usadas no script
-(`POS_CLIENTE_*` em `gerar_relatorio.py`) foram confirmadas comparando o *valor* de cada coluna
-(formato de data, CEP de 8 digitos, nome de vendedor conhecido) em varias linhas, nao o texto do
-cabecalho. Se a aba mudar de estrutura, reconfirme da mesma forma antes de usar as posicoes.
+A aba **"db_clientes"** tem o cadastro de clientes (telefone, vendedor responsavel, endereco) —
+**quase 5 mil linhas**. As posicoes de coluna usadas no script (`POS_CLIENTE_*` em
+`gerar_relatorio.py`, 0-indexado) foram confirmadas comparando o *valor* de cada coluna (formato
+de data, CEP de 8 digitos, nome de vendedor conhecido) em varias linhas, nao so o texto do
+cabecalho — em 26/07/2026 o cabecalho batia certinho com os dados (23 colunas), mas ja mudou de
+estrutura uma vez antes disso. Se a aba mudar de novo, reconfirme da mesma forma antes de usar.
 
 O painel usa isso para: mostrar o vendedor responsavel por cada cliente, e gerar um botao
-"Chamar no WhatsApp" (link `wa.me`) quando o cliente tem telefone cadastrado. **Cobertura atual
-e baixa** (~90 clientes cadastrados em db_clientes vs. ~106 clientes inadimplentes no momento
-deste teste, com so 1 nome batendo entre as duas listas) — a maioria dos cards vai mostrar "Sem
-telefone cadastrado" ate que db_clientes seja expandida para cobrir a base toda de clientes.
+"Chamar no WhatsApp" (link `wa.me`) quando o cliente tem telefone cadastrado.
 
 ## Tratativas (registro de cobranca)
 
@@ -50,38 +47,56 @@ planilha e o "banco de dados" real, e o painel e sempre uma leitura (regenerado 
 ## Fonte de dados
 
 - Planilha Google Sheets, ID: `1Y0mq4JIk-tS0JftosgHplGYzOAwDsG09uMcVLnitTl8`
-- Aba usada: **"Contas a Receber"** (gid=1625209165)
-- A planilha inteira (todas as abas) e retornada como um unico texto em markdown pela ferramenta
-  de leitura do Google Drive. Dentro desse texto, a aba "Contas a Receber" aparece como **varios
-  blocos de tabela** (um bloco por mes de vencimento), todos com o mesmo cabecalho de 5 colunas:
-
-  ```
-  | DATA DE EMISSÃO | CLIENTES | VALOR ORIGINAL | VALOR EM ABERTO | DATA DE VENCIMENTO |
-  ```
-
-  Ha tambem uma tabela "mestre" mais antiga, com colunas extras (mes, ano, Recebimentos), que para
-  de ser atualizada em maio/2026 — **ignore essa tabela mestre**, ela e obsoleta. O script
-  `scripts/gerar_relatorio.py` ja identifica e usa apenas os blocos de 5 colunas.
+- Abas usadas (nomes exatos das abas dentro da planilha, nao confundir com abas "de exibicao"
+  parecidas que existem no mesmo arquivo):
+  - **`db_contasareceber`** — fonte crua e completa dos titulos (colunas: DATA DE EMISSÃO,
+    CLIENTES, VALOR ORIGINAL, VALOR EM ABERTO, DATA DE VENCIMENTO, mes, ano, _, Recebimentos).
+    **Nao usar** a aba "Contas a Receber" (com espacos) — e so um relatorio/print formatado a
+    partir dessa mesma fonte, nao os dados crus. Tambem existe uma "db_contas_a_receber" (com
+    underscore) com granularidade por nota fiscal — nao usada por este script hoje, mas pode ser
+    uma fonte alternativa/complementar no futuro se `db_contasareceber` nao bastar.
+  - **`db_clientes`** — cadastro de clientes (quase 5 mil linhas).
+  - **`Tratativas`** — log de cobranca (ver secao acima).
+- **Importante:** este script le a planilha via um arquivo `.xlsx` baixado por completo (ver
+  Passo 1), nao via a ferramenta de "ler conteudo em texto" do Google Drive. Essa ferramenta
+  (`read_file_content`) converte a planilha inteira pra markdown e **trunca por volta de
+  100-110 linhas por tabela** — é inofensivo para tabelas pequenas (Tratativas) mas causa dados
+  incompletos/errados em `db_contasareceber` (430 linhas) e principalmente em `db_clientes`
+  (quase 5 mil linhas, ficava com <3% dos clientes lidos). Foi assim que descobrimos o problema:
+  um cliente real com telefone cadastrado aparecia como "sem telefone" porque a leitura truncada
+  nem chegava perto da linha dele.
 
 ## Passo a passo
 
-1. **Buscar o conteudo da planilha.** Use a ferramenta de leitura de arquivo do Google Drive
-   (`read_file_content`, ou equivalente disponivel na sessao) passando o fileId
-   `1Y0mq4JIk-tS0JftosgHplGYzOAwDsG09uMcVLnitTl8`.
-   - O conteudo e grande (~400 mil caracteres) e normalmente estoura o limite de tokens da
-     ferramenta. Isso e esperado: a propria ferramenta salva o JSON completo em um arquivo
-     temporario e informa o caminho no erro (ex: `.../tool-results/mcp-...-read_file_content-...txt`).
-     Use esse caminho no passo seguinte. Nao tente ler o conteudo inteiro manualmente.
+1. **Baixar a planilha inteira como .xlsx.** Use a ferramenta de download do Google Drive
+   (`download_file_content`, ou equivalente disponivel na sessao) passando o fileId
+   `1Y0mq4JIk-tS0JftosgHplGYzOAwDsG09uMcVLnitTl8` e
+   `exportMimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"`.
+   - O resultado normalmente estoura o limite de tokens da ferramenta (arquivo grande) — isso e
+     esperado, a propria ferramenta salva o JSON completo (campo `content`, base64) num arquivo
+     temporario. Depois, decodifique o base64 e salve como `.xlsx` de verdade:
+     ```bash
+     python3 -c "
+     import json, base64
+     with open('<caminho_do_txt_salvo>') as f:
+         data = json.load(f)
+     with open('/tmp/planilha_nobre_lar.xlsx', 'wb') as f:
+         f.write(base64.b64decode(data['content']))
+     "
+     ```
+   - `openpyxl` precisa estar instalado (`pip3 install openpyxl` se necessario — funcionou sem
+     configuracao extra na sessao onde isso foi construido).
 
 2. **Rodar o script de extracao/filtragem.**
 
    ```bash
-   python3 ".claude/skills/cobranca-semanal/scripts/gerar_relatorio.py" "<caminho_do_json_salvo>" "relatorios"
+   python3 ".claude/skills/cobranca-semanal/scripts/gerar_relatorio.py" "/tmp/planilha_nobre_lar.xlsx" "relatorios"
    ```
 
-   O script (puro Python, sem dependencias externas):
-   - Extrai todos os registros dos blocos de 5 colunas da aba Contas a Receber (dedup automatico)
-     e da aba Tratativas.
+   O script:
+   - Le as tres abas (`db_contasareceber`, `db_clientes`, `Tratativas`) direto via `openpyxl`,
+     sem limite de linhas e sem os problemas de alinhamento de cabecalho que a conversao pra
+     texto causava.
    - Usa a data atual do sistema como "hoje" (pode-se passar uma data manualmente como terceiro
      argumento `YYYY-MM-DD`, so para testes).
    - Filtra e separa em "inadimplentes do mes vigente", "vencimentos proximos 7 dias corridos" e
