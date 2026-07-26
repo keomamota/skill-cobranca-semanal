@@ -21,6 +21,21 @@ Gera um painel HTML de cobranca e tres relatorios CSV de apoio a partir da plani
    status) mostrando o historico de tratativas de cada cliente. Pensado para a diretora acompanhar
    o trabalho da equipe de cobranca e para a equipe registrar o resultado de cada contato.
 
+## db_clientes (telefone e vendedor)
+
+A aba **"db_clientes"** tem o cadastro de clientes (telefone, vendedor responsavel, endereco).
+O cabecalho de texto dessa aba **nao bate 1-para-1 com o conteudo real das colunas** (parece
+ter sido editada manualmente ao longo do tempo) — as posicoes usadas no script
+(`POS_CLIENTE_*` em `gerar_relatorio.py`) foram confirmadas comparando o *valor* de cada coluna
+(formato de data, CEP de 8 digitos, nome de vendedor conhecido) em varias linhas, nao o texto do
+cabecalho. Se a aba mudar de estrutura, reconfirme da mesma forma antes de usar as posicoes.
+
+O painel usa isso para: mostrar o vendedor responsavel por cada cliente, e gerar um botao
+"Chamar no WhatsApp" (link `wa.me`) quando o cliente tem telefone cadastrado. **Cobertura atual
+e baixa** (~90 clientes cadastrados em db_clientes vs. ~106 clientes inadimplentes no momento
+deste teste, com so 1 nome batendo entre as duas listas) — a maioria dos cards vai mostrar "Sem
+telefone cadastrado" ate que db_clientes seja expandida para cobrir a base toda de clientes.
+
 ## Tratativas (registro de cobranca)
 
 A equipe registra o resultado de cada contato de cobranca **diretamente na planilha**, numa aba

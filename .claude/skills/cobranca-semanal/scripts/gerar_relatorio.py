@@ -31,6 +31,23 @@ from datetime import date, datetime, timedelta
 HEADER_RECEBER = "| DATA DE EMISSÃO | CLIENTES | VALOR ORIGINAL | VALOR EM ABERTO | DATA DE VENCIMENTO |"
 HEADER_TRATATIVAS = "| Data | Cliente | Status | Tratativa | Autor |"
 
+# aba db_clientes: o cabecalho real da planilha (25 rotulos) nao bate 1-para-1 com a
+# ordem das 27 colunas de dados (ha colunas com rotulo mas conteudo de outra coisa —
+# provavelmente por edicoes manuais ao longo do tempo). As posicoes abaixo foram
+# confirmadas comparando o VALOR de cada coluna (formato de data, CEP de 8 digitos,
+# nome de vendedor conhecido como "CAMILA") em varias linhas, nao pelo texto do
+# cabecalho. Se a planilha mudar de novo, reconfirme dessa forma antes de usar.
+HEADER_DB_CLIENTES_PREFIXO = "| Estado | Bairro | Complemento | E-mail de recado"
+POS_CLIENTE_NOME = 4
+POS_CLIENTE_TEL_PRINCIPAL = 5
+POS_CLIENTE_CIDADE = 14
+POS_CLIENTE_ESTADO = 15
+POS_CLIENTE_BAIRRO = 16
+POS_CLIENTE_VENDEDOR = 22
+POS_CLIENTE_ENDERECO = 23
+POS_CLIENTE_TEL_SECUNDARIO = 24
+N_COLUNAS_DB_CLIENTES = 27
+
 
 def parse_valor(raw):
     raw = raw.strip().replace("R$", "").strip()
@@ -101,6 +118,67 @@ def extrair_contas_a_receber(content):
             "data_vencimento": d_venc,
         })
     return registros
+
+
+def normaliza_nome(nome):
+    return " ".join(nome.strip().upper().split())
+
+
+def telefone_whatsapp(raw):
+    """Converte um telefone BR em digitos puros com DDI 55, para link wa.me.
+    Retorna None se o campo estiver vazio/for um traco (sem telefone)."""
+    if not raw:
+        return None
+    raw = raw.strip()
+    if raw in ("", "-", "\\-", "—"):
+        return None
+    digitos = "".join(ch for ch in raw if ch.isdigit())
+    if len(digitos) < 10:
+        return None
+    if not digitos.startswith("55"):
+        digitos = "55" + digitos
+    return digitos
+
+
+def extrair_db_clientes(content):
+    """Le a aba db_clientes. Ver comentario acima de HEADER_DB_CLIENTES_PREFIXO sobre
+    por que usamos posicoes fixas confirmadas por valor, em vez do texto do cabecalho."""
+    linhas = content.split("\n")
+    clientes = {}
+    i = 0
+    while i < len(linhas):
+        if linhas[i].strip().startswith(HEADER_DB_CLIENTES_PREFIXO):
+            j = i + 1
+            while j < len(linhas):
+                l = linhas[j].strip()
+                if not l.startswith("|"):
+                    break
+                partes = [p.strip() for p in l.split("|")][1:-1]
+                if len(partes) != N_COLUNAS_DB_CLIENTES or not partes[0].isdigit():
+                    j += 1
+                    if l.replace("|", "").strip() == "":
+                        continue
+                    else:
+                        break
+                nome = partes[POS_CLIENTE_NOME]
+                if nome:
+                    clientes[normaliza_nome(nome)] = {
+                        "nome": nome,
+                        "telefone_principal": partes[POS_CLIENTE_TEL_PRINCIPAL],
+                        "telefone_secundario": partes[POS_CLIENTE_TEL_SECUNDARIO],
+                        "whatsapp_principal": telefone_whatsapp(partes[POS_CLIENTE_TEL_PRINCIPAL]),
+                        "whatsapp_secundario": telefone_whatsapp(partes[POS_CLIENTE_TEL_SECUNDARIO]),
+                        "vendedor": partes[POS_CLIENTE_VENDEDOR] or None,
+                        "cidade": partes[POS_CLIENTE_CIDADE],
+                        "estado": partes[POS_CLIENTE_ESTADO],
+                        "bairro": partes[POS_CLIENTE_BAIRRO],
+                        "endereco": partes[POS_CLIENTE_ENDERECO],
+                    }
+                j += 1
+            i = j
+        else:
+            i += 1
+    return clientes
 
 
 def extrair_tratativas(content):
@@ -216,6 +294,7 @@ def main():
 
     registros = extrair_contas_a_receber(content)
     tratativas = extrair_tratativas(content)
+    db_clientes = extrair_db_clientes(content)
 
     inadimplentes = []
     proximos = []
@@ -291,10 +370,14 @@ def main():
         })
 
     clientes = []
+    qtd_com_telefone = 0
     for c in clientes_map.values():
         hist = tratativas_por_cliente.get(c["cliente"], [])
         status_atual = hist[0]["status"] if hist else "Pendente"
         c["titulos"].sort(key=lambda t: t["dias_atraso"], reverse=True)
+        info_cliente = db_clientes.get(normaliza_nome(c["cliente"]))
+        if info_cliente and (info_cliente["whatsapp_principal"] or info_cliente["whatsapp_secundario"]):
+            qtd_com_telefone += 1
         clientes.append({
             **c,
             "qtd_titulos": len(c["titulos"]),
@@ -304,6 +387,11 @@ def main():
                 {"data": t["data"].strftime("%d/%m/%Y"), "status": t["status"], "nota": t["nota"], "autor": t["autor"]}
                 for t in hist
             ],
+            "vendedor": info_cliente["vendedor"] if info_cliente else None,
+            "telefone_principal": info_cliente["telefone_principal"] if info_cliente else None,
+            "telefone_secundario": info_cliente["telefone_secundario"] if info_cliente else None,
+            "whatsapp_principal": info_cliente["whatsapp_principal"] if info_cliente else None,
+            "whatsapp_secundario": info_cliente["whatsapp_secundario"] if info_cliente else None,
         })
     clientes.sort(key=lambda c: c["total_aberto"], reverse=True)
 
@@ -343,6 +431,8 @@ def main():
     print(json.dumps({
         "registros_lidos": len(registros),
         "tratativas_lidas": len(tratativas),
+        "db_clientes_lidos": len(db_clientes),
+        "clientes_inadimplentes_com_telefone": qtd_com_telefone,
         "inadimplentes": {"qtd": len(inadimplentes), "total": total_inad, "arquivo": path_inad},
         "proximos_7_dias": {"qtd": len(proximos), "total": total_prox, "arquivo": path_prox},
         "inadimplencia_total_ano": {"qtd_titulos": len(inadimplencia_ano), "qtd_clientes": qtd_clientes_ano, "total": total_ano, "arquivo": path_ano},

@@ -460,10 +460,19 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
         ? c.tratativas.map(t => '<div class="hist-item"><div class="hist-meta">' + t.data + (t.autor ? " · " + t.autor : "") + " · " + t.status + '</div>' + (t.nota || "<em>(sem observação)</em>") + '</div>').join("")
         : '<div class="empty-state">Nenhuma tratativa registrada ainda para este cliente.</div>';
 
+      const numeroWhats = c.whatsapp_principal || c.whatsapp_secundario;
+      const mensagem = "Olá " + c.cliente.split(" ")[0].charAt(0) + c.cliente.split(" ")[0].slice(1).toLowerCase() +
+        ", tudo bem? Aqui é da Nobre Lar. Identificamos um débito em aberto de " + fmtBRL(c.total_aberto) +
+        " (vencido há " + piorAtraso + " dia(s)). Podemos combinar a regularização?";
+      const btnWhats = numeroWhats
+        ? '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://wa.me/' + numeroWhats + '?text=' + encodeURIComponent(mensagem) + '">Chamar no WhatsApp</a>'
+        : '<span class="btn btn-ghost" style="cursor:default;opacity:0.6;">Sem telefone cadastrado</span>';
+      const vendedorTag = c.vendedor ? '<span class="cap" style="display:inline-block;margin-top:2px;">Vendedor: ' + c.vendedor + '</span>' : '';
+
       return (
         '<div class="client-card" data-idx="' + idx + '">' +
           '<div class="client-row" data-toggle="' + idx + '">' +
-            '<div class="name">' + c.cliente + '</div>' +
+            '<div class="name">' + c.cliente + '<br>' + vendedorTag + '</div>' +
             '<div class="num"><span class="cap">Em aberto</span>' + fmtBRL(c.total_aberto) + '</div>' +
             '<div class="num"><span class="cap">Títulos</span>' + c.qtd_titulos + '</div>' +
             '<div class="num"><span class="cap">Pior atraso</span>' + piorAtraso + ' dias</div>' +
@@ -473,6 +482,7 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
           '<div class="client-detail">' +
             '<table class="titulos-table"><thead><tr><th>Vencimento</th><th class="num">Saldo</th><th class="num">Atraso</th></tr></thead><tbody>' + titulosRows + '</tbody></table>' +
             '<div class="actions-row">' +
+              btnWhats +
               '<a class="btn btn-primary" target="_blank" rel="noopener" href="' + sheetLinkFor(c.cliente) + '">Registrar tratativa na planilha</a>' +
               '<button class="btn btn-ghost" data-copy="' + c.cliente.replace(/"/g, "&quot;") + '">Copiar nome do cliente</button>' +
             '</div>' +
