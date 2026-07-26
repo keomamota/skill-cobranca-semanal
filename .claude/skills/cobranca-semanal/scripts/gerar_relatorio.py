@@ -31,22 +31,22 @@ from datetime import date, datetime, timedelta
 HEADER_RECEBER = "| DATA DE EMISSÃO | CLIENTES | VALOR ORIGINAL | VALOR EM ABERTO | DATA DE VENCIMENTO |"
 HEADER_TRATATIVAS = "| Data | Cliente | Status | Tratativa | Autor |"
 
-# aba db_clientes: o cabecalho real da planilha (25 rotulos) nao bate 1-para-1 com a
-# ordem das 27 colunas de dados (ha colunas com rotulo mas conteudo de outra coisa —
-# provavelmente por edicoes manuais ao longo do tempo). As posicoes abaixo foram
-# confirmadas comparando o VALOR de cada coluna (formato de data, CEP de 8 digitos,
-# nome de vendedor conhecido como "CAMILA") em varias linhas, nao pelo texto do
-# cabecalho. Se a planilha mudar de novo, reconfirme dessa forma antes de usar.
-HEADER_DB_CLIENTES_PREFIXO = "| Estado | Bairro | Complemento | E-mail de recado"
+# aba db_clientes: estrutura confirmada em 26/07/2026 (23 colunas, cabecalho bate
+# 1-para-1 com os dados desta vez — confirmado cruzando "Proximo aniversario" com
+# "Data de nascimento" em varias linhas, mesmo dia/mes). Nao ha mais coluna de
+# telefone secundario nesta versao da aba. Se a planilha mudar de novo, reconfirme
+# posicao por posicao (comparando o VALOR de cada coluna, nao so o texto do
+# cabecalho) antes de usar.
+HEADER_DB_CLIENTES_PREFIXO = "| \\# | Tipo | Código | CNPJ/CPF | Nome | Telefone principal |"
 POS_CLIENTE_NOME = 4
 POS_CLIENTE_TEL_PRINCIPAL = 5
-POS_CLIENTE_CIDADE = 14
-POS_CLIENTE_ESTADO = 15
-POS_CLIENTE_BAIRRO = 16
-POS_CLIENTE_VENDEDOR = 22
-POS_CLIENTE_ENDERECO = 23
-POS_CLIENTE_TEL_SECUNDARIO = 24
-N_COLUNAS_DB_CLIENTES = 27
+POS_CLIENTE_CIDADE = 15
+POS_CLIENTE_ESTADO = 16
+POS_CLIENTE_BAIRRO = 17
+POS_CLIENTE_VENDEDOR = 18
+POS_CLIENTE_ENDERECO = 19
+POS_CLIENTE_TEL_SECUNDARIO = None
+N_COLUNAS_DB_CLIENTES = 23
 
 
 def parse_valor(raw):
@@ -161,13 +161,14 @@ def extrair_db_clientes(content):
                     else:
                         break
                 nome = partes[POS_CLIENTE_NOME]
+                tel_secundario = partes[POS_CLIENTE_TEL_SECUNDARIO] if POS_CLIENTE_TEL_SECUNDARIO is not None else ""
                 if nome:
                     clientes[normaliza_nome(nome)] = {
                         "nome": nome,
                         "telefone_principal": partes[POS_CLIENTE_TEL_PRINCIPAL],
-                        "telefone_secundario": partes[POS_CLIENTE_TEL_SECUNDARIO],
+                        "telefone_secundario": tel_secundario,
                         "whatsapp_principal": telefone_whatsapp(partes[POS_CLIENTE_TEL_PRINCIPAL]),
-                        "whatsapp_secundario": telefone_whatsapp(partes[POS_CLIENTE_TEL_SECUNDARIO]),
+                        "whatsapp_secundario": telefone_whatsapp(tel_secundario),
                         "vendedor": partes[POS_CLIENTE_VENDEDOR] or None,
                         "cidade": partes[POS_CLIENTE_CIDADE],
                         "estado": partes[POS_CLIENTE_ESTADO],
