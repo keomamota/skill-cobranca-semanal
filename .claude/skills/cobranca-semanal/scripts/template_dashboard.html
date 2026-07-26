@@ -1,0 +1,396 @@
+<meta charset="utf-8">
+<title>Painel de Cobrança — Nobre Lar</title>
+<style>
+  :root {
+    --ink: #16231F;
+    --muted: #55655F;
+    --paper: #F1F3EE;
+    --surface: #FFFFFF;
+    --surface-2: #E9ECE6;
+    --line: #D7DCD3;
+    --accent: #1F5C55;
+    --accent-soft: #DCEAE6;
+    --good: #2E7D4F;
+    --good-soft: #E1F0E5;
+    --warn: #B9791F;
+    --warn-soft: #F6E9D3;
+    --crit: #B23B33;
+    --crit-soft: #F5DEDB;
+    --info: #3B6FA0;
+    --info-soft: #DCE7F1;
+    --shadow: 0 1px 2px rgba(20, 30, 26, 0.06), 0 6px 20px -8px rgba(20, 30, 26, 0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #E7EEEC;
+      --muted: #9AACA4;
+      --paper: #10151A;
+      --surface: #182220;
+      --surface-2: #1E2B27;
+      --line: #2A3733;
+      --accent: #55C2B8;
+      --accent-soft: #1D3C38;
+      --good: #4CAE73;
+      --good-soft: #1B3527;
+      --warn: #D99A3D;
+      --warn-soft: #3A2E17;
+      --crit: #E0685F;
+      --crit-soft: #3C2220;
+      --info: #6FA8D8;
+      --info-soft: #1C2E3C;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -8px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #E7EEEC; --muted: #9AACA4; --paper: #10151A; --surface: #182220; --surface-2: #1E2B27;
+    --line: #2A3733; --accent: #55C2B8; --accent-soft: #1D3C38; --good: #4CAE73; --good-soft: #1B3527;
+    --warn: #D99A3D; --warn-soft: #3A2E17; --crit: #E0685F; --crit-soft: #3C2220; --info: #6FA8D8; --info-soft: #1C2E3C;
+  }
+  :root[data-theme="light"] {
+    --ink: #16231F; --muted: #55655F; --paper: #F1F3EE; --surface: #FFFFFF; --surface-2: #E9ECE6;
+    --line: #D7DCD3; --accent: #1F5C55; --accent-soft: #DCEAE6; --good: #2E7D4F; --good-soft: #E1F0E5;
+    --warn: #B9791F; --warn-soft: #F6E9D3; --crit: #B23B33; --crit-soft: #F5DEDB; --info: #3B6FA0; --info-soft: #DCE7F1;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.45;
+  }
+  h1, h2, h3 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; text-wrap: balance; margin: 0; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  header.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  header.top .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  header.top h1 { font-size: 28px; }
+  header.top .meta { text-align: right; font-size: 13px; color: var(--muted); }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .kpi .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
+  .kpi .value { font-size: 26px; font-weight: 600; }
+  .kpi .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .kpi .sub.good { color: var(--good); }
+  .kpi .sub.crit { color: var(--crit); }
+
+  .charts { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 860px) { .charts { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .panel h2 { font-size: 16px; margin-bottom: 4px; }
+  .panel .panel-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .chart-svg-wrap { overflow-x: auto; }
+  .bar-tooltip { position: fixed; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 12px; padding: 6px 9px; border-radius: 6px; opacity: 0; transform: translate(-50%, -110%); transition: opacity 0.1s; z-index: 50; white-space: nowrap; }
+  .bar-tooltip.show { opacity: 1; }
+  .bar-rect { transition: opacity 0.12s; cursor: pointer; }
+  .bar-rect:hover, .bar-rect.hover { opacity: 0.78; }
+  .axis-label { font-size: 11px; fill: var(--muted); }
+  .axis-line { stroke: var(--line); stroke-width: 1; }
+
+  .activity { margin-bottom: 28px; }
+  .activity ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .activity li { display: flex; gap: 10px; font-size: 13px; align-items: baseline; }
+  .activity .a-date { color: var(--muted); min-width: 68px; }
+  .activity .a-body strong { font-weight: 600; }
+  .empty-state { color: var(--muted); font-size: 13px; font-style: italic; }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .toolbar input[type="search"] { flex: 1; min-width: 200px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; }
+  .chip-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip-filter button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .chip-filter button.active { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+
+  .client-list { display: flex; flex-direction: column; gap: 8px; }
+  .client-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .client-row { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 14px; align-items: center; padding: 12px 16px; cursor: pointer; }
+  @media (max-width: 720px) { .client-row { grid-template-columns: 1fr; } }
+  .client-row .name { font-weight: 600; }
+  .client-row .num { text-align: right; font-size: 14px; }
+  .client-row .num .cap { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .status-pill { font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+  .status-Pendente { background: var(--warn-soft); color: var(--warn); }
+  .status-Contatado { background: var(--info-soft); color: var(--info); }
+  .status-Negociando, .status-Promessadepagamento { background: var(--info-soft); color: var(--info); }
+  .status-Pago { background: var(--good-soft); color: var(--good); }
+  .status-Semresposta { background: var(--crit-soft); color: var(--crit); }
+  .chevron { color: var(--muted); transition: transform 0.15s; }
+  .client-card.open .chevron { transform: rotate(90deg); }
+  .client-detail { display: none; padding: 0 16px 16px; border-top: 1px solid var(--line); }
+  .client-card.open .client-detail { display: block; }
+  .titulos-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+  .titulos-table th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .titulos-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .titulos-table td.num { text-align: right; }
+  .actions-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
+  .btn-primary { background: var(--accent); color: var(--paper); }
+  .btn-ghost { background: var(--surface-2); color: var(--ink); border-color: var(--line); }
+  .btn-ghost:active { transform: translateY(1px); }
+  .hist { display: flex; flex-direction: column; gap: 8px; }
+  .hist-item { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  .hist-item .hist-meta { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+
+  footer.foot { margin-top: 32px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: all 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Cobrança &amp; Recuperação de Crédito</div>
+      <h1>Painel de Cobrança — Nobre Lar</h1>
+    </div>
+    <div class="meta">Gerado em __DATA_GERACAO__<br>Fonte: aba "Contas a Receber" + "Tratativas" (Google Sheets)</div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="charts">
+    <div class="panel">
+      <h2>Contas a receber por mês de vencimento</h2>
+      <div class="panel-sub">Valor original faturado, por mês de vencimento do título</div>
+      <div class="chart-svg-wrap" id="chart-mensal"></div>
+    </div>
+    <div class="panel">
+      <h2>Inadimplência a recuperar por atraso</h2>
+      <div class="panel-sub">Saldo em aberto, agrupado por faixa de dias em atraso</div>
+      <div class="chart-svg-wrap" id="chart-aging"></div>
+    </div>
+  </section>
+
+  <section class="panel activity">
+    <h2>Atividade recente da equipe</h2>
+    <div class="panel-sub">Últimas tratativas registradas — use isso para acompanhar o trabalho de cobrança</div>
+    <div id="atividade"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Clientes inadimplentes — __ANO__</h2>
+    <div class="panel-sub">Agrupado por cliente. Clique para ver os títulos e o histórico de tratativas.</div>
+    <div class="toolbar">
+      <input type="search" id="busca" placeholder="Buscar cliente...">
+      <div class="chip-filter" id="filtros"></div>
+    </div>
+    <div class="client-list" id="lista-clientes"></div>
+  </section>
+
+  <footer class="foot">
+    Painel gerado automaticamente pela skill <code>cobranca-semanal</code>. As tratativas são registradas
+    diretamente na planilha (aba "Tratativas") e aparecem aqui na próxima geração do painel.
+  </footer>
+</div>
+
+<div class="bar-tooltip" id="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+window.__DASHBOARD_DATA__ = __DASHBOARD_DATA_JSON__;
+window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
+
+(function () {
+  const data = window.__DASHBOARD_DATA__;
+  const fmtBRL = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const toast = (msg) => {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 1800);
+  };
+
+  // ---------- KPIs ----------
+  const kpis = data.kpis;
+  const kpiDefs = [
+    {
+      label: "Inadimplência total do ano",
+      value: fmtBRL(kpis.inadimplencia_total_ano.valor),
+      sub: kpis.inadimplencia_total_ano.qtd_clientes + " clientes · " + kpis.inadimplencia_total_ano.qtd_titulos + " títulos",
+    },
+    {
+      label: "Inadimplentes do mês vigente",
+      value: fmtBRL(kpis.inadimplentes_mes_vigente.valor),
+      sub: kpis.inadimplentes_mes_vigente.qtd_titulos + " título(s) vencido(s) este mês",
+    },
+    {
+      label: "Vencendo em 7 dias",
+      value: fmtBRL(kpis.vencimentos_7_dias.valor),
+      sub: kpis.vencimentos_7_dias.qtd_titulos + " título(s) a vencer",
+    },
+    {
+      label: "Cobertura de contato",
+      value: kpis.cobertura_contato_pct.toFixed(0) + "%",
+      sub: "clientes com pelo menos 1 tratativa registrada",
+    },
+    (function () {
+      if (!kpis.variacao_semana) {
+        return { label: "Variação semanal", value: "—", sub: "ainda sem histórico (primeira geração)" };
+      }
+      const v = kpis.variacao_semana.variacao;
+      const caiu = v < 0;
+      return {
+        label: "Variação da dívida (7 dias)",
+        value: (caiu ? "↓ " : "↑ ") + fmtBRL(Math.abs(v)),
+        sub: (caiu ? "queda" : "alta") + " desde " + kpis.variacao_semana.data_referencia.split("-").reverse().join("/"),
+        subClass: caiu ? "good" : "crit",
+      };
+    })(),
+  ];
+  document.getElementById("kpis").innerHTML = kpiDefs.map(k =>
+    '<div class="kpi"><div class="label">' + k.label + '</div><div class="value">' + k.value + '</div><div class="sub ' + (k.subClass || "") + '">' + k.sub + '</div></div>'
+  ).join("");
+
+  // ---------- Bar chart helper ----------
+  function barChart(container, items, { xKey, yKey, colorFor, formatY, height = 220 }) {
+    const w = Math.max(container.clientWidth || 460, items.length * 70);
+    const h = height;
+    const padL = 64, padB = 34, padT = 10, padR = 10;
+    const max = Math.max(1, ...items.map(d => d[yKey]));
+    const bw = (w - padL - padR) / items.length;
+    const scaleY = (v) => (h - padB - padT) * (v / max);
+
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" role="img">';
+    // gridlines (4)
+    for (let i = 0; i <= 4; i++) {
+      const y = padT + (h - padT - padB) * (i / 4);
+      const val = max * (1 - i / 4);
+      svg += '<line class="axis-line" x1="' + padL + '" x2="' + (w - padR) + '" y1="' + y + '" y2="' + y + '" />';
+      svg += '<text class="axis-label" x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + formatY(val) + '</text>';
+    }
+    items.forEach((d, i) => {
+      const barH = scaleY(d[yKey]);
+      const x = padL + i * bw + bw * 0.18;
+      const bw2 = bw * 0.64;
+      const y = h - padB - barH;
+      svg += '<rect class="bar-rect" data-i="' + i + '" x="' + x + '" y="' + y + '" width="' + bw2 + '" height="' + Math.max(barH, 2) + '" rx="4" fill="' + colorFor(d, i) + '"></rect>';
+      svg += '<text class="axis-label" x="' + (x + bw2 / 2) + '" y="' + (h - padB + 16) + '" text-anchor="middle">' + d[xKey] + '</text>';
+    });
+    svg += '</svg>';
+    container.innerHTML = svg;
+
+    const tooltip = document.getElementById("tooltip");
+    container.querySelectorAll(".bar-rect").forEach((rect) => {
+      const d = items[+rect.dataset.i];
+      rect.addEventListener("mousemove", (e) => {
+        tooltip.textContent = d[xKey] + ": " + fmtBRL(d[yKey]) + (d.qtd !== undefined ? " · " + d.qtd + " título(s)" : "");
+        tooltip.style.left = e.clientX + "px";
+        tooltip.style.top = e.clientY + "px";
+        tooltip.classList.add("show");
+      });
+      rect.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+    });
+  }
+
+  const mesesPt = { "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez" };
+  const serieMensal = data.serie_mensal.map(m => ({ ...m, label: mesesPt[m.mes.split("-")[1]] + "/" + m.mes.split("-")[0].slice(2) }));
+  barChart(document.getElementById("chart-mensal"), serieMensal, {
+    xKey: "label", yKey: "valor_original",
+    colorFor: () => "var(--accent)",
+    formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
+  });
+
+  const agingRamp = ["#E7C27A", "#D99A3D", "#C06B2E", "#B23B33"];
+  barChart(document.getElementById("chart-aging"), data.aging, {
+    xKey: "faixa", yKey: "valor",
+    colorFor: (d, i) => agingRamp[i] || agingRamp[agingRamp.length - 1],
+    formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
+    height: 220,
+  });
+
+  // ---------- Atividade recente ----------
+  const atividadeEl = document.getElementById("atividade");
+  if (!data.atividade_recente || data.atividade_recente.length === 0) {
+    atividadeEl.innerHTML = '<div class="empty-state">Nenhuma tratativa registrada ainda — a equipe pode começar pela lista de clientes abaixo.</div>';
+  } else {
+    atividadeEl.innerHTML = '<ul>' + data.atividade_recente.map(a =>
+      '<li><span class="a-date">' + a.data + '</span><span class="a-body"><strong>' + a.cliente + '</strong> — ' + a.status + (a.nota ? ": " + a.nota : "") + (a.autor ? ' <span style="color:var(--muted)">(' + a.autor + ')</span>' : '') + '</span></li>'
+    ).join("") + '</ul>';
+  }
+
+  // ---------- Lista de clientes ----------
+  const statusList = ["Todos", "Pendente", "Contatado", "Negociando", "Pago", "Sem resposta"];
+  let filtroAtual = "Todos";
+  const filtrosEl = document.getElementById("filtros");
+  filtrosEl.innerHTML = statusList.map(s => '<button data-s="' + s + '" class="' + (s === "Todos" ? "active" : "") + '">' + s + '</button>').join("");
+
+  const listaEl = document.getElementById("lista-clientes");
+  const buscaEl = document.getElementById("busca");
+
+  function statusClass(s) {
+    return "status-" + (s || "Pendente").replace(/\s+/g, "");
+  }
+
+  function sheetLinkFor(cliente) {
+    return window.__SHEET_URL__;
+  }
+
+  function render() {
+    const termo = buscaEl.value.trim().toLowerCase();
+    const clientes = data.clientes.filter(c => {
+      if (filtroAtual !== "Todos" && c.status_atual !== filtroAtual) return false;
+      if (termo && !c.cliente.toLowerCase().includes(termo)) return false;
+      return true;
+    });
+
+    if (clientes.length === 0) {
+      listaEl.innerHTML = '<div class="empty-state">Nenhum cliente encontrado com esse filtro.</div>';
+      return;
+    }
+
+    listaEl.innerHTML = clientes.map((c, idx) => {
+      const piorAtraso = Math.max(...c.titulos.map(t => t.dias_atraso));
+      const titulosRows = c.titulos.map(t =>
+        '<tr><td>' + t.data_vencimento + '</td><td class="num">' + fmtBRL(t.valor_aberto) + '</td><td class="num">' + t.dias_atraso + ' dia(s)</td></tr>'
+      ).join("");
+      const histItems = c.tratativas.length
+        ? c.tratativas.map(t => '<div class="hist-item"><div class="hist-meta">' + t.data + (t.autor ? " · " + t.autor : "") + " · " + t.status + '</div>' + (t.nota || "<em>(sem observação)</em>") + '</div>').join("")
+        : '<div class="empty-state">Nenhuma tratativa registrada ainda para este cliente.</div>';
+
+      return (
+        '<div class="client-card" data-idx="' + idx + '">' +
+          '<div class="client-row" data-toggle="' + idx + '">' +
+            '<div class="name">' + c.cliente + '</div>' +
+            '<div class="num"><span class="cap">Em aberto</span>' + fmtBRL(c.total_aberto) + '</div>' +
+            '<div class="num"><span class="cap">Títulos</span>' + c.qtd_titulos + '</div>' +
+            '<div class="num"><span class="cap">Pior atraso</span>' + piorAtraso + ' dias</div>' +
+            '<span class="status-pill ' + statusClass(c.status_atual) + '">' + c.status_atual + '</span>' +
+            '<span class="chevron">&#9656;</span>' +
+          '</div>' +
+          '<div class="client-detail">' +
+            '<table class="titulos-table"><thead><tr><th>Vencimento</th><th class="num">Saldo</th><th class="num">Atraso</th></tr></thead><tbody>' + titulosRows + '</tbody></table>' +
+            '<div class="actions-row">' +
+              '<a class="btn btn-primary" target="_blank" rel="noopener" href="' + sheetLinkFor(c.cliente) + '">Registrar tratativa na planilha</a>' +
+              '<button class="btn btn-ghost" data-copy="' + c.cliente.replace(/"/g, "&quot;") + '">Copiar nome do cliente</button>' +
+            '</div>' +
+            '<div class="hist">' + histItems + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  filtrosEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    filtroAtual = btn.dataset.s;
+    filtrosEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
+    render();
+  });
+  buscaEl.addEventListener("input", render);
+  listaEl.addEventListener("click", (e) => {
+    const copyBtn = e.target.closest("[data-copy]");
+    if (copyBtn) {
+      navigator.clipboard.writeText(copyBtn.dataset.copy).then(() => toast("Nome copiado: " + copyBtn.dataset.copy));
+      return;
+    }
+    const toggle = e.target.closest("[data-toggle]");
+    if (toggle && !e.target.closest(".actions-row")) {
+      toggle.closest(".client-card").classList.toggle("open");
+    }
+  });
+
+  render();
+})();
+</script>
