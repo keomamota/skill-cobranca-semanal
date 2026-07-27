@@ -2,10 +2,12 @@
 """
 Extrai da planilha Google Sheets do Nobre Lar (arquivo .xlsx baixado por completo -
 ver observacao abaixo) os dados para o painel de cobranca:
-  - Aba "db_contasareceber": titulos (data emissao, cliente, valor original, valor em
-    aberto, data de vencimento, mes, ano). Essa e a fonte "crua" e completa - a aba
-    visual "Contas a Receber" e so um relatorio formatado a partir dela e nao deve
-    ser usada como fonte.
+  - Aba "db_contas_a_receber" (com underscore): titulos por nota fiscal - Loja, Cliente,
+    Numero, Descricao, Situacao (Aberta/Quitada/Estornada), Data de vencimento, Valor,
+    A receber, Recebido. Confirmado com a usuaria em 27/07/2026 como a fonte oficial -
+    e bem mais completa que "db_contasareceber" (sem underscore, ~430 linhas "curadas")
+    ou a aba visual "Contas a Receber" (so um relatorio formatado). Titulos "Estornada"
+    sao excluidos (cancelados, nao contam como receber nem como recebido).
   - Aba "db_clientes": cadastro de clientes (telefone, vendedor, endereco).
   - Aba "Tratativas": historico de contatos de cobranca (Data, Cliente, Status,
     Tratativa, Autor), preenchida manualmente pela equipe direto no Google Sheets.
@@ -42,7 +44,7 @@ from datetime import date, datetime, timedelta
 
 import openpyxl
 
-SHEET_CONTAS_A_RECEBER = "db_contasareceber"
+SHEET_CONTAS_A_RECEBER = "db_contas_a_receber"
 SHEET_TRATATIVAS = "Tratativas"
 SHEET_DB_CLIENTES = "db_clientes"
 
@@ -62,15 +64,27 @@ POS_CLIENTE_TEL_SECUNDARIO = None
 
 
 def parse_valor(v):
-    """Aceita tanto numeros nativos do Excel quanto texto formatado (ex: 'R$ 1.234,56')."""
+    """Aceita numeros nativos do Excel, texto em formato americano ('279.00', como em
+    db_contas_a_receber) e texto em formato brasileiro ('R$ 1.234,56'). Tenta o parse
+    direto primeiro (cobre o formato americano) antes de tentar a conversao BR - se
+    ambos falharem (ex: celula com data por engano, erro de digitacao na planilha),
+    retorna None em vez de adivinhar."""
     if v is None:
         return None
     if isinstance(v, (int, float)):
         return float(v)
-    v = str(v).strip().replace("R$", "").strip()
-    v = v.replace(".", "").replace(",", ".")
+    if isinstance(v, (date, datetime)):
+        return None
+    s = str(v).strip().replace("R$", "").strip()
+    if not s:
+        return None
     try:
-        return float(v)
+        return float(s)
+    except ValueError:
+        pass
+    s_br = s.replace(".", "").replace(",", ".")
+    try:
+        return float(s_br)
     except ValueError:
         return None
 
@@ -102,28 +116,42 @@ def _linhas_planilha(wb, nome_aba):
 def extrair_contas_a_receber(wb):
     registros = []
     vistos = set()
+    ignorados_valor_invalido = 0
     for row in _linhas_planilha(wb, SHEET_CONTAS_A_RECEBER):
-        data_emissao_raw, cliente, valor_orig_raw, valor_aberto_raw, data_venc_raw = row[:5]
+        if row is None or len(row) < 9:
+            continue
+        loja, cliente, numero, descricao, situacao, data_venc_raw, valor_raw, a_receber_raw, recebido_raw = row[:9]
+        if not cliente or situacao == "Estornada":
+            continue
         d_venc = parse_data(data_venc_raw)
-        if not cliente or d_venc is None:
+        if d_venc is None:
             continue
-        v_orig = parse_valor(valor_orig_raw)
-        v_aberto = parse_valor(valor_aberto_raw)
-        if v_aberto is None:
+        v_total = parse_valor(valor_raw)
+        v_aberto = parse_valor(a_receber_raw)
+        v_recebido = parse_valor(recebido_raw)
+        if v_total is None or v_aberto is None:
+            # linha com erro de digitacao na planilha (ex: data no lugar de valor) - pula
+            ignorados_valor_invalido += 1
             continue
-        d_emissao = parse_data(data_emissao_raw)
-        data_emissao_str = d_emissao.strftime("%d/%m/%Y") if d_emissao else str(data_emissao_raw or "")
-        chave = (data_emissao_str, cliente, v_orig, d_venc)
+        if v_recebido is None:
+            v_recebido = 0.0
+        numero_nota = descricao or numero or ""
+        chave = (numero_nota, cliente, d_venc)
         if chave in vistos:
             continue
         vistos.add(chave)
         registros.append({
             "cliente": cliente,
-            "data_emissao": data_emissao_str,
-            "valor_original": v_orig,
+            "numero_nota": numero_nota,
+            "loja": loja,
+            "situacao": situacao,
+            "valor_original": v_total,
             "valor_aberto": v_aberto,
+            "recebido": v_recebido,
             "data_vencimento": d_venc,
         })
+    if ignorados_valor_invalido:
+        print(f"[aviso] {ignorados_valor_invalido} linha(s) de db_contas_a_receber ignorada(s) por valor invalido (provavel erro de digitacao na planilha)", file=sys.stderr)
     return registros
 
 
@@ -295,9 +323,10 @@ def main():
 
     for r in registros:
         mes_chave = r["data_vencimento"].strftime("%Y-%m")
-        serie_mensal.setdefault(mes_chave, {"valor_original": 0.0, "valor_aberto": 0.0, "qtd": 0})
+        serie_mensal.setdefault(mes_chave, {"valor_original": 0.0, "valor_aberto": 0.0, "recebido": 0.0, "qtd": 0})
         serie_mensal[mes_chave]["valor_original"] += r["valor_original"] or 0.0
         serie_mensal[mes_chave]["valor_aberto"] += r["valor_aberto"]
+        serie_mensal[mes_chave]["recebido"] += r["recebido"]
         serie_mensal[mes_chave]["qtd"] += 1
 
         if r["valor_aberto"] <= 0.005:
@@ -355,7 +384,7 @@ def main():
         c = clientes_map.setdefault(r["cliente"], {"cliente": r["cliente"], "total_aberto": 0.0, "titulos": []})
         c["total_aberto"] += r["valor_aberto"]
         c["titulos"].append({
-            "data_emissao": r["data_emissao"],
+            "numero_nota": r["numero_nota"],
             "data_vencimento": r["data_vencimento"].strftime("%d/%m/%Y"),
             "valor_original": r["valor_original"],
             "valor_aberto": r["valor_aberto"],
@@ -403,7 +432,12 @@ def main():
             "variacao_semana": variacao,
         },
         "serie_mensal": [
-            {"mes": mes, **vals} for mes, vals in sorted(serie_mensal.items())
+            {
+                "mes": mes,
+                **vals,
+                "pct_recebido": (vals["recebido"] / vals["valor_original"] * 100) if vals["valor_original"] > 0.005 else 0.0,
+            }
+            for mes, vals in sorted(serie_mensal.items())
         ],
         "aging": aging_lista,
         "clientes": clientes,

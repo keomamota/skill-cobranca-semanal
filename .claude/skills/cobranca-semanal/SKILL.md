@@ -16,10 +16,11 @@ Gera um painel HTML de cobranca e tres relatorios CSV de apoio a partir da plani
    por cliente. Esta lista existe para a equipe de cobranca trabalhar cliente a cliente (ligar,
    cobrar), nao so o atraso recente — inclui todo o historico de inadimplencia acumulada do ano.
 4. **Painel HTML (Artifact)** — dashboard visual com big numbers, grafico de contas a receber por
-   mes de vencimento, grafico de inadimplencia por faixa de atraso (aging), feed de atividade
-   recente da equipe de cobranca, e lista de clientes agrupada (expansivel, com busca e filtro por
-   status) mostrando o historico de tratativas de cada cliente. Pensado para a diretora acompanhar
-   o trabalho da equipe de cobranca e para a equipe registrar o resultado de cada contato.
+   mes de vencimento (total faturado x recebido, com % recebido no topo de cada mes), grafico de
+   inadimplencia por faixa de atraso (aging), feed de atividade recente da equipe de cobranca, e
+   lista de clientes agrupada (expansivel, com busca e filtro por status) mostrando o historico de
+   tratativas de cada cliente. Pensado para a diretora acompanhar o trabalho da equipe de cobranca
+   e para a equipe registrar o resultado de cada contato.
 
 ## db_clientes (telefone e vendedor)
 
@@ -49,12 +50,16 @@ planilha e o "banco de dados" real, e o painel e sempre uma leitura (regenerado 
 - Planilha Google Sheets, ID: `1Y0mq4JIk-tS0JftosgHplGYzOAwDsG09uMcVLnitTl8`
 - Abas usadas (nomes exatos das abas dentro da planilha, nao confundir com abas "de exibicao"
   parecidas que existem no mesmo arquivo):
-  - **`db_contasareceber`** — fonte crua e completa dos titulos (colunas: DATA DE EMISSÃO,
-    CLIENTES, VALOR ORIGINAL, VALOR EM ABERTO, DATA DE VENCIMENTO, mes, ano, _, Recebimentos).
-    **Nao usar** a aba "Contas a Receber" (com espacos) — e so um relatorio/print formatado a
-    partir dessa mesma fonte, nao os dados crus. Tambem existe uma "db_contas_a_receber" (com
-    underscore) com granularidade por nota fiscal — nao usada por este script hoje, mas pode ser
-    uma fonte alternativa/complementar no futuro se `db_contasareceber` nao bastar.
+  - **`db_contas_a_receber`** (com underscore) — fonte oficial dos titulos, **confirmada com a
+    usuaria em 27/07/2026**. Colunas: Loja, Cliente, Numero, Descricao, Situacao
+    (Aberta/Quitada/Estornada), Data de vencimento, Valor, A receber, Recebido. Titulos com
+    Situacao="Estornada" sao excluidos (cancelados). Os valores vem como texto em formato
+    americano (`"279.00"`, ponto decimal), nao brasileiro — `parse_valor()` tenta os dois formatos.
+    Uma pequena quantidade de linhas (~30 de ~1800) tem erro de digitacao na planilha (data no
+    lugar de valor numerico) — sao ignoradas com um aviso no stderr, nao travam o script.
+    **Nao usar** `db_contasareceber` (sem underscore, ~430 linhas "curadas", incompleta — foi a
+    fonte antiga, tinha julho/2026 com so 19 titulos/R$2.638 quando na verdade sao 247
+    titulos/R$109 mil) nem a aba visual "Contas a Receber" (so um relatorio formatado).
   - **`db_clientes`** — cadastro de clientes (quase 5 mil linhas).
   - **`Tratativas`** — log de cobranca (ver secao acima).
 - **Importante:** este script le a planilha via um arquivo `.xlsx` baixado por completo (ver
@@ -94,7 +99,7 @@ planilha e o "banco de dados" real, e o painel e sempre uma leitura (regenerado 
    ```
 
    O script:
-   - Le as tres abas (`db_contasareceber`, `db_clientes`, `Tratativas`) direto via `openpyxl`,
+   - Le as tres abas (`db_contas_a_receber`, `db_clientes`, `Tratativas`) direto via `openpyxl`,
      sem limite de linhas e sem os problemas de alinhamento de cabecalho que a conversao pra
      texto causava.
    - Usa a data atual do sistema como "hoje" (pode-se passar uma data manualmente como terceiro

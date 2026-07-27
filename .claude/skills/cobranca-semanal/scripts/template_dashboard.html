@@ -102,6 +102,9 @@
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; box-shadow: var(--shadow); }
   .panel h2 { font-size: 16px; margin-bottom: 4px; }
   .panel .panel-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .chart-legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .chart-legend span { display: flex; align-items: center; gap: 6px; }
+  .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
   .chart-svg-wrap { overflow-x: auto; }
   .bar-tooltip { position: fixed; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 12px; padding: 6px 9px; border-radius: 6px; opacity: 0; transform: translate(-50%, -110%); transition: opacity 0.1s; z-index: 50; white-space: nowrap; }
   .bar-tooltip.show { opacity: 1; }
@@ -181,7 +184,11 @@
   <section class="charts">
     <div class="panel">
       <h2>Contas a receber por mês de vencimento</h2>
-      <div class="panel-sub">Valor original faturado, por mês de vencimento do título</div>
+      <div class="panel-sub">Total faturado x recebido, por mês de vencimento do título — % no topo é o quanto já foi recebido</div>
+      <div class="chart-legend">
+        <span><i style="background:var(--accent)"></i> Total faturado</span>
+        <span><i style="background:var(--good)"></i> Recebido</span>
+      </div>
       <div class="chart-svg-wrap" id="chart-mensal"></div>
     </div>
     <div class="panel">
@@ -336,6 +343,57 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     });
   }
 
+  // ---------- Grafico mensal: total faturado x recebido (barras agrupadas + % no topo) ----------
+  function barChartMensalRecebido(container, items, { onClick, isSelected }) {
+    const w = Math.max(container.clientWidth || 460, items.length * 90);
+    const h = 240;
+    const padL = 64, padB = 34, padT = 26, padR = 10;
+    const max = Math.max(1, ...items.map(d => d.valor_original));
+    const scaleY = (v) => (h - padB - padT) * (v / max);
+    const grupoW = (w - padL - padR) / items.length;
+    const barW = grupoW * 0.32;
+
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" role="img">';
+    for (let i = 0; i <= 4; i++) {
+      const y = padT + (h - padT - padB) * (i / 4);
+      const val = max * (1 - i / 4);
+      svg += '<line class="axis-line" x1="' + padL + '" x2="' + (w - padR) + '" y1="' + y + '" y2="' + y + '" />';
+      svg += '<text class="axis-label" x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + "R$ " + Math.round(val / 1000) + "k" + '</text>';
+    }
+    items.forEach((d, i) => {
+      const gx = padL + i * grupoW + grupoW * 0.18;
+      const hTotal = scaleY(d.valor_original);
+      const hReceb = scaleY(d.recebido);
+      const yTotal = h - padB - hTotal;
+      const yReceb = h - padB - hReceb;
+      const selected = isSelected && isSelected(d);
+      const stroke = selected ? ' stroke="var(--ink)" stroke-width="2"' : '';
+      svg += '<rect class="bar-rect" data-i="' + i + '" data-serie="total" x="' + gx + '" y="' + yTotal + '" width="' + barW + '" height="' + Math.max(hTotal, 2) + '" rx="3" fill="var(--accent)"' + stroke + '></rect>';
+      svg += '<rect class="bar-rect" data-i="' + i + '" data-serie="recebido" x="' + (gx + barW + 4) + '" y="' + yReceb + '" width="' + barW + '" height="' + Math.max(hReceb, 2) + '" rx="3" fill="var(--good)"' + stroke + '></rect>';
+      const topoGrupo = Math.min(yTotal, yReceb);
+      svg += '<text class="axis-label" x="' + (gx + barW + 2) + '" y="' + (topoGrupo - 8) + '" text-anchor="middle" font-weight="700">' + d.pct_recebido.toFixed(0) + '%</text>';
+      svg += '<text class="axis-label" x="' + (gx + barW + 2) + '" y="' + (h - padB + 16) + '" text-anchor="middle">' + d.label + '</text>';
+    });
+    svg += '</svg>';
+    container.innerHTML = svg;
+
+    const tooltip = document.getElementById("tooltip");
+    container.querySelectorAll(".bar-rect").forEach((rect) => {
+      const d = items[+rect.dataset.i];
+      const serie = rect.dataset.serie;
+      rect.addEventListener("mousemove", (e) => {
+        const rotulo = serie === "total" ? "Total faturado" : "Recebido";
+        const valor = serie === "total" ? d.valor_original : d.recebido;
+        tooltip.textContent = d.label + " · " + rotulo + ": " + fmtBRL(valor) + " (" + d.pct_recebido.toFixed(1) + "% recebido do total) — clique para filtrar";
+        tooltip.style.left = e.clientX + "px";
+        tooltip.style.top = e.clientY + "px";
+        tooltip.classList.add("show");
+      });
+      rect.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+      if (onClick) rect.addEventListener("click", () => onClick(d));
+    });
+  }
+
   const mesesPt = { "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez" };
 
   // ---------- Estado de filtro compartilhado (KPIs, graficos, chips de status e busca) ----------
@@ -363,10 +421,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
   const agingRamp = ["#E8A33D", "#D97F2E", "#C2551F", "#A82E27"];
 
   function desenharGraficos() {
-    barChart(document.getElementById("chart-mensal"), serieMensal, {
-      xKey: "label", yKey: "valor_original",
-      colorFor: () => "var(--accent)",
-      formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
+    barChartMensalRecebido(document.getElementById("chart-mensal"), serieMensal, {
       isSelected: (d) => filtros.mes === d.mesChave,
       onClick: (d) => {
         filtros.mes = (filtros.mes === d.mesChave) ? null : d.mesChave;
@@ -470,10 +525,10 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     listaEl.innerHTML = clientes.map((c, idx) => {
       const piorAtraso = Math.max(...c.titulos.map(t => t.dias_atraso));
       const titulosRows = c.titulos.map(t =>
-        '<tr><td>' + t.data_emissao + '</td><td>' + t.data_vencimento + '</td><td class="num">' + fmtBRL(t.valor_aberto) + '</td><td class="num">' + t.dias_atraso + ' dia(s)</td></tr>'
+        '<tr><td>' + t.numero_nota + '</td><td>' + t.data_vencimento + '</td><td class="num">' + fmtBRL(t.valor_aberto) + '</td><td class="num">' + t.dias_atraso + ' dia(s)</td></tr>'
       ).join("");
       const titulosLista = c.titulos.map(t =>
-        "• Compra em " + t.data_emissao + " — " + fmtBRL(t.valor_aberto) + " (venceu " + t.data_vencimento + ", " + t.dias_atraso + " dia(s) em atraso)"
+        "• Nota " + t.numero_nota + " — " + fmtBRL(t.valor_aberto) + " (venceu " + t.data_vencimento + ", " + t.dias_atraso + " dia(s) em atraso)"
       ).join("\n");
       const histItems = c.tratativas.length
         ? c.tratativas.map(t => '<div class="hist-item"><div class="hist-meta">' + t.data + (t.autor ? " · " + t.autor : "") + " · " + t.status + '</div>' + (t.nota || "<em>(sem observação)</em>") + '</div>').join("")
@@ -506,7 +561,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
             '<span class="chevron">&#9656;</span>' +
           '</div>' +
           '<div class="client-detail">' +
-            '<table class="titulos-table"><thead><tr><th>Compra</th><th>Vencimento</th><th class="num">Saldo</th><th class="num">Atraso</th></tr></thead><tbody>' + titulosRows + '</tbody></table>' +
+            '<table class="titulos-table"><thead><tr><th>Nota</th><th>Vencimento</th><th class="num">Saldo</th><th class="num">Atraso</th></tr></thead><tbody>' + titulosRows + '</tbody></table>' +
             '<div class="actions-row">' +
               btnWhats +
               '<a class="btn btn-primary" target="_blank" rel="noopener" href="' + sheetLinkFor(c.cliente) + '">Registrar tratativa na planilha</a>' +
