@@ -35,16 +35,17 @@ Gera um painel HTML de cobranca e tres relatorios CSV de apoio a partir da plani
    lista crua de titulos (`titulos_raw` no JSON), nao vem prontos do servidor — e assim que o
    filtro de ano/cliente/JVM consegue recalcular tudo instantaneamente sem gerar o painel de novo.
 
-## Achado importante (27/07/2026): % de inadimplencia esta muito alto (75-99% por mes)
+## Historico: % de inadimplencia parecia muito alto (resolvido em 27/07/2026)
 
-Ao testar o comparativo, os numeros de inadimplencia por mes ficaram muito altos (ex: janeiro/2026
-com 90%+ ainda em aberto, mesmo 6+ meses depois). Confirmei que o calculo bate com os dados crus:
-a maioria dos titulos tem `Situacao=Aberta` e `Recebido=0` mesmo para meses ja bem antigos. Isso
-pode significar (a) a inadimplencia realmente e essa alta, ou (b) a coluna Situacao/Recebido em
-`db_contas_a_receber` nao esta sendo atualizada quando um titulo e pago (parecido com o problema
-que ja aconteceu com `db_contasareceber` estar incompleta). **Nao assuma que e um bug do
-script** — os numeros batem com os dados da planilha. Se a usuaria achar os numeros errados de
-novo, o proximo passo e perguntar como/quando a coluna "Situacao" e atualizada no processo dela.
+Na primeira versao deste comparativo, a % de inadimplencia deu 81-89% (ate 90%+ em meses ja bem
+antigos) - investigamos e o calculo batia com os dados crus, mas os numeros eram implausveis pra
+um negocio real. A usuaria estava, na mesma sessao, ainda alimentando `db_contas_a_receber` com
+mais historico - depois que ela completou os dados (255 -> 3.482 titulos so em 2025), os
+percentuais cairam pra um patamar plausivel (7,6% em 2025, 19,1% em 2026), com o valor absoluto
+em aberto praticamente inalterado (o que mudou foi o denominador: muito mais titulos "Quitada"
+apareceram). Ou seja: **nao era bug, era dado incompleto** - a planilha estava no meio de ser
+populada. Licao: sempre que os percentuais parecerem extremos, primeiro suspeite de dado
+incompleto (peça pra reconferir se a aba esta completa) antes de desconfiar do calculo.
 
 ## db_clientes (telefone e vendedor)
 
