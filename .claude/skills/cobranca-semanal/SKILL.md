@@ -16,9 +16,14 @@ Gera um painel HTML de cobranca e tres relatorios CSV de apoio a partir da plani
    por cliente. Esta lista existe para a equipe de cobranca trabalhar cliente a cliente (ligar,
    cobrar), nao so o atraso recente — inclui todo o historico de inadimplencia acumulada do ano.
 4. **Painel HTML (Artifact)** — dashboard visual com:
-   - Filtros globais (afetam TUDO: kpis, graficos, lista): seletor de ano, atalho "excluir
-     clientes JVM*" (o CEO tem forma de pagamento propria e polui a analise real da empresa se
-     nao for excluido), e busca pra excluir qualquer cliente especifico da analise.
+   - Filtros globais (afetam TUDO: kpis, os dois graficos e a lista - cada grafico so ignora o
+     proprio eixo, ex: o grafico mensal continua mostrando os 12 meses mesmo com um mes
+     selecionado, pra manter o contexto de tendencia, mas os outros graficos/kpis/lista ficam
+     restritos a esse mes): seletor de ano, seletor de mes (Jan-Dez, "Todos" pra limpar), atalho
+     "excluir clientes JVM*" (o CEO tem forma de pagamento propria e polui a analise real da
+     empresa se nao for excluido), e busca pra excluir qualquer cliente especifico da analise.
+     Os filtros de status/aging/"sem contato" (chips da lista) tambem entram nesse mesmo motor
+     (`titulosBaseAno` no JS) e afetam kpis+graficos, nao so a lista.
    - Comparativo de % de inadimplencia por ano lado a lado (com seta indicando se piorou ou
      melhorou), independente do ano selecionado no filtro principal.
    - Big numbers operacionais (inadimplencia do ano selecionado, mes vigente, vencendo 7 dias,

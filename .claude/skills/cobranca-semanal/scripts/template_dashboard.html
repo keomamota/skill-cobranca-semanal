@@ -87,6 +87,9 @@
   .filtro-ano { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 3px; }
   .filtro-ano button { border: none; background: transparent; color: var(--muted); border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .filtro-ano button.active { background: var(--accent); color: var(--accent-ink); }
+  .filtro-mes { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 3px; flex-wrap: wrap; }
+  .filtro-mes button { border: none; background: transparent; color: var(--muted); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .filtro-mes button.active { background: var(--accent); color: var(--accent-ink); }
   .btn-toggle { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-toggle.active { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
   .filtro-clientes { position: relative; flex: 1; min-width: 220px; }
@@ -207,6 +210,7 @@
     <div class="panel-sub">Afetam todos os números, gráficos e a lista de clientes abaixo</div>
     <div class="filtros-globais-row">
       <div class="filtro-ano" id="filtro-ano"></div>
+      <div class="filtro-mes" id="filtro-mes"></div>
       <button class="btn-toggle" id="btn-excluir-jvm" title='Clientes com nome iniciando em "JVM" são o CEO da empresa, com forma de pagamento própria'>Excluir clientes "JVM*" (CEO)</button>
       <div class="filtro-clientes">
         <input type="search" id="busca-excluir-cliente" placeholder="Excluir um cliente específico da análise...">
@@ -403,10 +407,14 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   let filtrosGlobais = {
     ano: anosDisponiveis.includes(anoAtualReal) ? anoAtualReal : anosDisponiveis[anosDisponiveis.length - 1],
+    mes: null, // "01".."12" ou null ("todos os meses") - filtro do topo, ao lado do ano
     clientesExcluidos: new Set(),
     excluirJVM: false,
   };
-  let filtros = { status: "Todos", mes: null, aging: null, semContato: false };
+  // filtros de refinamento da lista - tambem entram no calculo dos graficos/kpis (ver
+  // titulosBaseAno), exceto no proprio grafico de origem (mensal ignora seu proprio
+  // filtro de mes, aging ignora seu proprio filtro de faixa), pra nao virar circular.
+  let filtros = { status: "Todos", aging: null, semContato: false };
 
   function parseISO(s) { return new Date(s + "T00:00:00"); }
   function diffDias(a, b) { return Math.round((a - b) / 86400000); }
@@ -419,14 +427,6 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     if (dias <= 60) return "31-60 dias";
     if (dias <= 90) return "61-90 dias";
     return "90+ dias";
-  }
-  function labelMes(mesChave) { // "mm/yyyy" -> "Fev/2026"
-    const [mm, yyyy] = mesChave.split("/");
-    return mesesPt[mm] + "/" + yyyy;
-  }
-  function labelMesDe(dataBR) { // "dd/mm/yyyy" -> "mm/yyyy"
-    const p = dataBR.split("/");
-    return p[1] + "/" + p[2];
   }
   function scrollToList() {
     document.getElementById("lista-clientes").closest("section").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -449,11 +449,46 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   const todosClientesUnicos = Array.from(new Set(data.titulos_raw.map((t) => t.cliente))).sort();
 
+  function clienteStatusAtual(nomeCliente) {
+    const hist = tratativasPorCliente[nomeCliente.trim().toUpperCase()] || [];
+    return hist.length ? hist[0].status : "Pendente";
+  }
+  function clientePassaStatusFiltro(nomeCliente) {
+    if (filtros.status !== "Todos" && clienteStatusAtual(nomeCliente) !== filtros.status) return false;
+    if (filtros.semContato) {
+      const hist = tratativasPorCliente[nomeCliente.trim().toUpperCase()] || [];
+      if (hist.length > 0) return false;
+    }
+    return true;
+  }
+
   function titulosBase() {
     return data.titulos_raw.filter((t) => passaFiltroCliente(t.cliente));
   }
   function titulosDoAno(ano) {
     return titulosBase().filter((t) => t.vencimento.slice(0, 4) === String(ano));
+  }
+  // Base "completa" pra um ano: aplica ano + cliente/JVM (via titulosDoAno) + status/semContato
+  // (client-level) + mes e aging do topo/lista - exceto os que o proprio grafico de origem
+  // for excluir (pra ele continuar mostrando as 12 barras / as 4 faixas, com o restante do
+  // contexto ainda filtrado).
+  function titulosBaseAno(ano, { excluirMes = false, excluirAging = false } = {}) {
+    let base = titulosDoAno(ano);
+    if (filtros.status !== "Todos" || filtros.semContato) {
+      base = base.filter((t) => clientePassaStatusFiltro(t.cliente));
+    }
+    if (!excluirMes && filtrosGlobais.mes) {
+      base = base.filter((t) => t.vencimento.slice(5, 7) === filtrosGlobais.mes);
+    }
+    if (!excluirAging && filtros.aging) {
+      base = base.filter((t) => {
+        if (t.valor_aberto <= 0.005) return false;
+        const venc = parseISO(t.vencimento);
+        if (venc >= hoje) return false;
+        return bucketAtraso(diffDias(hoje, venc)) === filtros.aging;
+      });
+    }
+    return base;
   }
 
   function statsAno(ano) {
@@ -476,7 +511,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   function serieMensalAno(ano) {
     const porMes = {};
-    titulosDoAno(ano).forEach((t) => {
+    titulosBaseAno(ano, { excluirMes: true }).forEach((t) => {
       const mm = t.vencimento.slice(5, 7);
       const v = (porMes[mm] = porMes[mm] || { valor_original: 0, recebido: 0, valor_vencido: 0, aberto_vencido: 0, qtd: 0 });
       v.valor_original += t.valor_original;
@@ -492,6 +527,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       return {
         label: mesesPt[mm] + "/" + String(ano).slice(2),
         mesChave: mm + "/" + ano,
+        mesNum: mm,
         valor_original: v.valor_original,
         recebido: v.recebido,
         pct_recebido: v.valor_original > 0.005 ? (v.recebido / v.valor_original * 100) : 0,
@@ -505,7 +541,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     const ordem = ["1-30 dias", "31-60 dias", "61-90 dias", "90+ dias"];
     const buckets = {};
     ordem.forEach((b) => (buckets[b] = { valor: 0, qtd: 0 }));
-    titulosDoAno(ano).forEach((t) => {
+    titulosBaseAno(ano, { excluirAging: true }).forEach((t) => {
       if (t.valor_aberto <= 0.005) return;
       const venc = parseISO(t.vencimento);
       if (venc >= hoje) return;
@@ -518,7 +554,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   function clientesInadimplentesAno(ano) {
     const porCliente = {};
-    titulosDoAno(ano).forEach((t) => {
+    titulosBaseAno(ano).forEach((t) => {
       if (t.valor_aberto <= 0.005) return;
       const venc = parseISO(t.vencimento);
       if (venc >= hoje) return;
@@ -545,8 +581,12 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   function kpisOperacionais() {
     // "mes vigente" e "vencendo em 7 dias" sao sempre relativos a hoje de verdade,
-    // independente do ano selecionado no filtro - so respeitam exclusao de clientes.
-    const base = titulosBase();
+    // independente do ano/mes selecionado no filtro - mas respeitam exclusao de
+    // clientes (JVM/especifico) e status/semContato, pra ficar consistente com o resto.
+    let base = titulosBase();
+    if (filtros.status !== "Todos" || filtros.semContato) {
+      base = base.filter((t) => clientePassaStatusFiltro(t.cliente));
+    }
     const limite = new Date(hoje.getTime() + 7 * 86400000);
     let mesVigenteValor = 0, mesVigenteQtd = 0;
     const proximos = [];
@@ -572,6 +612,19 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     if (!btn) return;
     filtrosGlobais.ano = Number(btn.dataset.ano);
     renderTudo();
+  });
+
+  // ---------- Filtro de mes (segmentado, topo) ----------
+  const meses12 = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+  const filtroMesEl = document.getElementById("filtro-mes");
+  filtroMesEl.innerHTML = '<button data-mes="">Todos</button>' +
+    meses12.map((mm) => '<button data-mes="' + mm + '">' + mesesPt[mm] + '</button>').join("");
+  filtroMesEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    filtrosGlobais.mes = btn.dataset.mes || null;
+    renderTudo();
+    scrollToList();
   });
 
   // ---------- Toggle "excluir JVM*" ----------
@@ -615,6 +668,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
   function renderChipsGlobais() {
     const el = document.getElementById("chips-globais");
     const chips = [];
+    if (filtrosGlobais.mes) chips.push({ key: "mes", label: "Mês: " + mesesPt[filtrosGlobais.mes] });
     if (filtrosGlobais.excluirJVM) chips.push({ key: "jvm", label: 'Sem clientes "JVM*"' });
     filtrosGlobais.clientesExcluidos.forEach((nome) => chips.push({ key: "cliente:" + nome, label: "Sem " + nome }));
     if (!chips.length) {
@@ -627,7 +681,8 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     const btn = e.target.closest("[data-clear-global]");
     if (!btn) return;
     const k = btn.dataset.clearGlobal;
-    if (k === "jvm") filtrosGlobais.excluirJVM = false;
+    if (k === "mes") filtrosGlobais.mes = null;
+    else if (k === "jvm") filtrosGlobais.excluirJVM = false;
     else if (k.startsWith("cliente:")) filtrosGlobais.clientesExcluidos.delete(k.slice(8));
     renderTudo();
   });
@@ -651,21 +706,26 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   // ---------- KPIs operacionais (ano selecionado + hoje) ----------
   function renderKPIs() {
-    const statSelecionado = statsAno(filtrosGlobais.ano);
+    // clientesAno ja reflete TODOS os filtros ativos (ano, mes, cliente/JVM, status, aging) -
+    // usamos ele (nao statsAno, que e so pro comparativo anual, sempre ano inteiro/sem filtro
+    // de mes) como fonte do KPI, pra ficar 100% consistente com o grafico e a lista.
     const clientesAno = clientesInadimplentesAno(filtrosGlobais.ano);
+    const totalAbertoFiltrado = clientesAno.reduce((s, c) => s + c.total_aberto, 0);
+    const qtdTitulosFiltrado = clientesAno.reduce((s, c) => s + c.qtd_titulos, 0);
     const op = kpisOperacionais();
     const qtdContatados = clientesAno.filter((c) => c.tratativas.length > 0).length;
     const coberturaPct = clientesAno.length ? (qtdContatados / clientesAno.length * 100) : 0;
     window.__ULTIMO_OP__ = op;
     window.__ULTIMO_CLIENTES_ANO__ = clientesAno;
 
+    const labelPeriodo = filtrosGlobais.ano + (filtrosGlobais.mes ? " (" + mesesPt[filtrosGlobais.mes] + ")" : "");
     const kpiDefs = [
       {
         kpi: "total-ano",
         hint: "Clique para ver todos",
-        label: "Inadimplência total de " + filtrosGlobais.ano,
-        value: fmtBRL(statSelecionado.abertoVencido),
-        sub: clientesAno.length + " clientes · " + statSelecionado.qtdTitulos + " títulos no ano",
+        label: "Inadimplência total de " + labelPeriodo,
+        value: fmtBRL(totalAbertoFiltrado),
+        sub: clientesAno.length + " clientes · " + qtdTitulosFiltrado + " títulos",
       },
       {
         kpi: "mes-vigente",
@@ -686,7 +746,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
         hint: "Clique para ver quem falta contatar",
         label: "Cobertura de contato",
         value: coberturaPct.toFixed(0) + "%",
-        sub: "clientes de " + filtrosGlobais.ano + " com pelo menos 1 tratativa",
+        sub: "clientes de " + labelPeriodo + " com pelo menos 1 tratativa",
       },
       (function () {
         if (!data.kpis.variacao_semana) {
@@ -713,10 +773,10 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
   function desenharGraficos() {
     const serieMensal = serieMensalAno(filtrosGlobais.ano);
     barChartMensalRecebido(document.getElementById("chart-mensal"), serieMensal, {
-      isSelected: (d) => filtros.mes === d.mesChave,
+      isSelected: (d) => filtrosGlobais.mes === d.mesNum,
       onClick: (d) => {
-        filtros.mes = (filtros.mes === d.mesChave) ? null : d.mesChave;
-        render();
+        filtrosGlobais.mes = (filtrosGlobais.mes === d.mesNum) ? null : d.mesNum;
+        renderTudo();
         scrollToList();
       },
     });
@@ -730,7 +790,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       isSelected: (d) => filtros.aging === d.faixa,
       onClick: (d) => {
         filtros.aging = (filtros.aging === d.faixa) ? null : d.faixa;
-        render();
+        renderTudo();
         scrollToList();
       },
     });
@@ -782,7 +842,6 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   function renderChipsAtivos() {
     const chips = [];
-    if (filtros.mes) chips.push({ key: "mes", label: "Mês: " + labelMes(filtros.mes) });
     if (filtros.aging) chips.push({ key: "aging", label: "Atraso: " + filtros.aging });
     if (filtros.semContato) chips.push({ key: "semContato", label: "Ainda não contatados" });
 
@@ -797,8 +856,10 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
   }
 
   function renderTudo() {
-    document.getElementById("ano-titulo-lista").textContent = filtrosGlobais.ano;
+    const tituloAno = filtrosGlobais.ano + (filtrosGlobais.mes ? " · " + mesesPt[filtrosGlobais.mes] : "");
+    document.getElementById("ano-titulo-lista").textContent = tituloAno;
     filtroAnoEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", Number(b.dataset.ano) === filtrosGlobais.ano));
+    filtroMesEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", (b.dataset.mes || null) === filtrosGlobais.mes));
     btnJvmEl.classList.toggle("active", filtrosGlobais.excluirJVM);
     renderChipsGlobais();
     renderComparativoAnos();
@@ -808,13 +869,11 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
   }
 
   function render() {
+    // status/semContato/aging/mes ja foram aplicados a montante em clientesInadimplentesAno()
+    // (ver titulosBaseAno) - aqui so falta a busca por nome, que e so uma refinacao da lista.
     const termo = buscaEl.value.trim().toLowerCase();
     const clientes = (window.__ULTIMO_CLIENTES_ANO__ || clientesInadimplentesAno(filtrosGlobais.ano)).filter(c => {
-      if (filtros.status !== "Todos" && c.status_atual !== filtros.status) return false;
       if (termo && !c.cliente.toLowerCase().includes(termo)) return false;
-      if (filtros.mes && !c.titulos.some(t => labelMesDe(t.data_vencimento) === filtros.mes)) return false;
-      if (filtros.aging && !c.titulos.some(t => bucketAtraso(t.dias_atraso) === filtros.aging)) return false;
-      if (filtros.semContato && c.tratativas.length > 0) return false;
       return true;
     });
 
@@ -888,7 +947,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     if (!btn) return;
     filtros.status = btn.dataset.s;
     filtrosEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
-    render();
+    renderTudo();
   });
   buscaEl.addEventListener("input", render);
 
@@ -896,11 +955,10 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     const btn = e.target.closest("[data-clear]");
     if (!btn) return;
     const k = btn.dataset.clear;
-    if (k === "all") { filtros.mes = null; filtros.aging = null; filtros.semContato = false; }
-    else if (k === "mes") filtros.mes = null;
+    if (k === "all") { filtros.aging = null; filtros.semContato = false; }
     else if (k === "aging") filtros.aging = null;
     else if (k === "semContato") filtros.semContato = false;
-    render();
+    renderTudo();
   });
 
   document.getElementById("kpis").addEventListener("click", (e) => {
@@ -908,27 +966,23 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     if (!card) return;
     const k = card.dataset.kpi;
     if (k === "total-ano") {
-      filtros = { status: "Todos", mes: null, aging: null, semContato: false };
+      filtros = { status: "Todos", aging: null, semContato: false };
+      filtrosGlobais.mes = null;
       buscaEl.value = "";
       filtrosEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.s === "Todos"));
-      render();
+      renderTudo();
       scrollToList();
     } else if (k === "mes-vigente") {
-      const mesVigenteChave = mesAtualChave.split("-")[1] + "/" + mesAtualChave.split("-")[0];
-      if (filtrosGlobais.ano !== anoAtualReal) {
-        filtrosGlobais.ano = anoAtualReal;
-        filtros.mes = mesVigenteChave;
-        renderTudo();
-      } else {
-        filtros.mes = (filtros.mes === mesVigenteChave) ? null : mesVigenteChave;
-        render();
-      }
+      const mesVigenteNum = mesAtualChave.split("-")[1];
+      filtrosGlobais.ano = anoAtualReal;
+      filtrosGlobais.mes = (filtrosGlobais.mes === mesVigenteNum) ? null : mesVigenteNum;
+      renderTudo();
       scrollToList();
     } else if (k === "vencendo-7-dias") {
       document.getElementById("painel-proximos").scrollIntoView({ behavior: "smooth", block: "start" });
     } else if (k === "cobertura") {
       filtros.semContato = !filtros.semContato;
-      render();
+      renderTudo();
       scrollToList();
     }
   });
