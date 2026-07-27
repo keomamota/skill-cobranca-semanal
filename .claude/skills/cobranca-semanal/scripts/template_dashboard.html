@@ -83,6 +83,29 @@
   header.top h1 .lar { color: var(--accent-text); }
   header.top .meta { text-align: right; font-size: 13px; color: var(--muted); }
 
+  .filtros-globais-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .filtro-ano { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 3px; }
+  .filtro-ano button { border: none; background: transparent; color: var(--muted); border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .filtro-ano button.active { background: var(--accent); color: var(--accent-ink); }
+  .btn-toggle { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-toggle.active { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+  .filtro-clientes { position: relative; flex: 1; min-width: 220px; }
+  .filtro-clientes input { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 13px; }
+  .sugestoes-cliente { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-top: 4px; max-height: 220px; overflow-y: auto; z-index: 20; box-shadow: var(--shadow); display: none; }
+  .sugestoes-cliente.show { display: block; }
+  .sugestoes-cliente button { display: block; width: 100%; text-align: left; padding: 8px 12px; border: none; background: none; color: var(--ink); font-size: 13px; cursor: pointer; }
+  .sugestoes-cliente button:hover { background: var(--surface-2); }
+  .chips-globais { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  .comparativo-anos { display: flex; gap: 12px; align-items: stretch; margin-bottom: 28px; flex-wrap: wrap; }
+  .comparativo-card { flex: 1; min-width: 160px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .comparativo-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
+  .comparativo-card .value { font-size: 30px; font-weight: 700; }
+  .comparativo-card .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .comparativo-seta { display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; padding: 0 4px; }
+  .comparativo-seta.piora { color: var(--crit); }
+  .comparativo-seta.melhora { color: var(--good); }
+
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 28px; }
   .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); text-align: left; font: inherit; color: inherit; }
   .kpi.clickable { cursor: pointer; transition: border-color 0.12s, transform 0.12s; }
@@ -179,12 +202,28 @@
     <div class="meta">Gerado em __DATA_GERACAO__<br>Fonte: aba "Contas a Receber" + "Tratativas" (Google Sheets)</div>
   </header>
 
+  <section class="panel">
+    <h2>Filtros da análise</h2>
+    <div class="panel-sub">Afetam todos os números, gráficos e a lista de clientes abaixo</div>
+    <div class="filtros-globais-row">
+      <div class="filtro-ano" id="filtro-ano"></div>
+      <button class="btn-toggle" id="btn-excluir-jvm" title='Clientes com nome iniciando em "JVM" são o CEO da empresa, com forma de pagamento própria'>Excluir clientes "JVM*" (CEO)</button>
+      <div class="filtro-clientes">
+        <input type="search" id="busca-excluir-cliente" placeholder="Excluir um cliente específico da análise...">
+        <div class="sugestoes-cliente" id="sugestoes-cliente"></div>
+      </div>
+    </div>
+    <div class="chips-globais" id="chips-globais"></div>
+  </section>
+
+  <section class="comparativo-anos" id="comparativo-anos"></section>
+
   <section class="kpis" id="kpis"></section>
 
   <section class="charts">
     <div class="panel">
       <h2>Contas a receber por mês de vencimento</h2>
-      <div class="panel-sub">Total faturado x recebido, por mês de vencimento do título — % no topo é o quanto já foi recebido</div>
+      <div class="panel-sub">Total faturado x recebido, por mês de vencimento do título — % no topo é a inadimplência do mês (vencido e não pago)</div>
       <div class="chart-legend">
         <span><i style="background:var(--accent)"></i> Total faturado</span>
         <span><i style="background:var(--good)"></i> Recebido</span>
@@ -211,7 +250,7 @@
   </section>
 
   <section class="panel">
-    <h2>Clientes inadimplentes — __ANO__</h2>
+    <h2>Clientes inadimplentes — <span id="ano-titulo-lista"></span></h2>
     <div class="panel-sub">Agrupado por cliente. Clique num cliente para ver os títulos e o histórico de tratativas. Clique nos números acima ou nas barras dos gráficos para filtrar esta lista.</div>
     <div class="chips-ativos" id="chips-ativos"></div>
     <div class="toolbar">
@@ -246,59 +285,9 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     setTimeout(() => el.classList.remove("show"), 1800);
   };
 
-  // ---------- KPIs ----------
-  const kpis = data.kpis;
-  const [anoAtual, mesAtualNum] = data.hoje_iso.split("-");
-  const mesAtual = mesAtualNum + "/" + anoAtual;
-  const kpiDefs = [
-    {
-      kpi: "total-ano",
-      hint: "Clique para ver todos",
-      label: "Inadimplência total do ano",
-      value: fmtBRL(kpis.inadimplencia_total_ano.valor),
-      sub: kpis.inadimplencia_total_ano.qtd_clientes + " clientes · " + kpis.inadimplencia_total_ano.qtd_titulos + " títulos",
-    },
-    {
-      kpi: "mes-vigente",
-      hint: "Clique para filtrar",
-      label: "Inadimplentes do mês vigente",
-      value: fmtBRL(kpis.inadimplentes_mes_vigente.valor),
-      sub: kpis.inadimplentes_mes_vigente.qtd_titulos + " título(s) vencido(s) este mês",
-    },
-    {
-      kpi: "vencendo-7-dias",
-      hint: "Clique para ver a lista",
-      label: "Vencendo em 7 dias",
-      value: fmtBRL(kpis.vencimentos_7_dias.valor),
-      sub: kpis.vencimentos_7_dias.qtd_titulos + " título(s) a vencer",
-    },
-    {
-      kpi: "cobertura",
-      hint: "Clique para ver quem falta contatar",
-      label: "Cobertura de contato",
-      value: kpis.cobertura_contato_pct.toFixed(0) + "%",
-      sub: "clientes com pelo menos 1 tratativa registrada",
-    },
-    (function () {
-      if (!kpis.variacao_semana) {
-        return { label: "Variação semanal", value: "—", sub: "ainda sem histórico (primeira geração)" };
-      }
-      const v = kpis.variacao_semana.variacao;
-      const caiu = v < 0;
-      return {
-        label: "Variação da dívida (7 dias)",
-        value: (caiu ? "↓ " : "↑ ") + fmtBRL(Math.abs(v)),
-        sub: (caiu ? "queda" : "alta") + " desde " + kpis.variacao_semana.data_referencia.split("-").reverse().join("/"),
-        subClass: caiu ? "good" : "crit",
-      };
-    })(),
-  ];
-  document.getElementById("kpis").innerHTML = kpiDefs.map(k =>
-    '<div class="kpi' + (k.kpi ? ' clickable' : '') + '"' + (k.kpi ? ' data-kpi="' + k.kpi + '" tabindex="0" role="button"' : '') + '>' +
-      '<div class="label">' + k.label + '</div><div class="value">' + k.value + '</div><div class="sub ' + (k.subClass || "") + '">' + k.sub + '</div>' +
-      (k.hint ? '<div class="hint">' + k.hint + '</div>' : '') +
-    '</div>'
-  ).join("");
+  // KPIs, comparativo anual, graficos e lista de clientes agora sao todos
+  // recalculados dinamicamente (ver motor de filtragem mais abaixo), porque
+  // precisam responder ao filtro de ano/clientes/JVM sem depender do servidor.
 
   // ---------- Bar chart helper ----------
   function barChart(container, items, { xKey, yKey, colorFor, formatY, height = 220, onClick, isSelected }) {
@@ -360,6 +349,12 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       svg += '<line class="axis-line" x1="' + padL + '" x2="' + (w - padR) + '" y1="' + y + '" y2="' + y + '" />';
       svg += '<text class="axis-label" x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + "R$ " + Math.round(val / 1000) + "k" + '</text>';
     }
+    function corInadimplencia(pct) {
+      if (pct >= 20) return "var(--crit)";
+      if (pct >= 8) return "var(--warn)";
+      return "var(--good)";
+    }
+
     items.forEach((d, i) => {
       const gx = padL + i * grupoW + grupoW * 0.18;
       const hTotal = scaleY(d.valor_original);
@@ -371,7 +366,8 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       svg += '<rect class="bar-rect" data-i="' + i + '" data-serie="total" x="' + gx + '" y="' + yTotal + '" width="' + barW + '" height="' + Math.max(hTotal, 2) + '" rx="3" fill="var(--accent)"' + stroke + '></rect>';
       svg += '<rect class="bar-rect" data-i="' + i + '" data-serie="recebido" x="' + (gx + barW + 4) + '" y="' + yReceb + '" width="' + barW + '" height="' + Math.max(hReceb, 2) + '" rx="3" fill="var(--good)"' + stroke + '></rect>';
       const topoGrupo = Math.min(yTotal, yReceb);
-      svg += '<text class="axis-label" x="' + (gx + barW + 2) + '" y="' + (topoGrupo - 8) + '" text-anchor="middle" font-weight="700">' + d.pct_recebido.toFixed(0) + '%</text>';
+      svg += '<text x="' + (gx + barW + 2) + '" y="' + (topoGrupo - 20) + '" text-anchor="middle" font-weight="700" font-size="13" fill="' + corInadimplencia(d.pct_inadimplencia) + '">' + d.pct_inadimplencia.toFixed(0) + '%</text>';
+      svg += '<text class="axis-label" x="' + (gx + barW + 2) + '" y="' + (topoGrupo - 8) + '" text-anchor="middle" font-size="9">inadimpl.</text>';
       svg += '<text class="axis-label" x="' + (gx + barW + 2) + '" y="' + (h - padB + 16) + '" text-anchor="middle">' + d.label + '</text>';
     });
     svg += '</svg>';
@@ -384,7 +380,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       rect.addEventListener("mousemove", (e) => {
         const rotulo = serie === "total" ? "Total faturado" : "Recebido";
         const valor = serie === "total" ? d.valor_original : d.recebido;
-        tooltip.textContent = d.label + " · " + rotulo + ": " + fmtBRL(valor) + " (" + d.pct_recebido.toFixed(1) + "% recebido do total) — clique para filtrar";
+        tooltip.textContent = d.label + " · " + rotulo + ": " + fmtBRL(valor) + " (" + d.pct_recebido.toFixed(1) + "% recebido · " + d.pct_inadimplencia.toFixed(1) + "% inadimplente do total) — clique para filtrar";
         tooltip.style.left = e.clientX + "px";
         tooltip.style.top = e.clientY + "px";
         tooltip.classList.add("show");
@@ -396,16 +392,27 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
   const mesesPt = { "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez" };
 
-  // ---------- Estado de filtro compartilhado (KPIs, graficos, chips de status e busca) ----------
+  // ---------- Motor de filtragem global: ano, clientes excluidos, atalho "JVM*" ----------
+  // Estes filtros afetam TUDO (kpis, graficos, comparativo anual, lista) - por isso os
+  // titulos brutos (data.titulos_raw) sao recalculados aqui no navegador a cada mudanca,
+  // em vez de vir prontos do servidor (que so gera um snapshot por execucao).
+  const anosDisponiveis = (data.anos_disponiveis && data.anos_disponiveis.length) ? data.anos_disponiveis : [Number(data.hoje_iso.slice(0, 4))];
+  const hoje = new Date(data.hoje_iso + "T00:00:00");
+  const anoAtualReal = hoje.getFullYear();
+  const mesAtualChave = data.hoje_iso.slice(0, 7); // "yyyy-mm"
+
+  let filtrosGlobais = {
+    ano: anosDisponiveis.includes(anoAtualReal) ? anoAtualReal : anosDisponiveis[anosDisponiveis.length - 1],
+    clientesExcluidos: new Set(),
+    excluirJVM: false,
+  };
   let filtros = { status: "Todos", mes: null, aging: null, semContato: false };
 
-  function mesFromData(dataStr) { // "dd/mm/yyyy" -> "mm/yyyy"
-    const p = dataStr.split("/");
-    return p[1] + "/" + p[2];
-  }
-  function labelMes(mesStr) { // "mm/yyyy" -> "Fev/2026"
-    const [mm, yyyy] = mesStr.split("/");
-    return mesesPt[mm] + "/" + yyyy;
+  function parseISO(s) { return new Date(s + "T00:00:00"); }
+  function diffDias(a, b) { return Math.round((a - b) / 86400000); }
+  function formatarDataBR(iso) {
+    const [y, m, d] = iso.split("-");
+    return d + "/" + m + "/" + y;
   }
   function bucketAtraso(dias) {
     if (dias <= 30) return "1-30 dias";
@@ -413,14 +420,298 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     if (dias <= 90) return "61-90 dias";
     return "90+ dias";
   }
+  function labelMes(mesChave) { // "mm/yyyy" -> "Fev/2026"
+    const [mm, yyyy] = mesChave.split("/");
+    return mesesPt[mm] + "/" + yyyy;
+  }
+  function labelMesDe(dataBR) { // "dd/mm/yyyy" -> "mm/yyyy"
+    const p = dataBR.split("/");
+    return p[1] + "/" + p[2];
+  }
   function scrollToList() {
     document.getElementById("lista-clientes").closest("section").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const serieMensal = data.serie_mensal.map(m => ({ ...m, label: mesesPt[m.mes.split("-")[1]] + "/" + m.mes.split("-")[0].slice(2), mesChave: m.mes.split("-")[1] + "/" + m.mes.split("-")[0] }));
-  const agingRamp = ["#E8A33D", "#D97F2E", "#C2551F", "#A82E27"];
+  function passaFiltroCliente(nomeCliente) {
+    const norm = nomeCliente.trim().toUpperCase();
+    if (filtrosGlobais.excluirJVM && norm.startsWith("JVM")) return false;
+    if (filtrosGlobais.clientesExcluidos.has(norm)) return false;
+    return true;
+  }
+
+  const clientesInfoPorNome = data.clientes_info || {};
+  const tratativasPorCliente = {};
+  (data.tratativas_raw || []).forEach((t) => {
+    const key = t.cliente.trim().toUpperCase();
+    (tratativasPorCliente[key] = tratativasPorCliente[key] || []).push(t);
+  });
+  Object.values(tratativasPorCliente).forEach((lst) => lst.sort((a, b) => b.data.localeCompare(a.data)));
+
+  const todosClientesUnicos = Array.from(new Set(data.titulos_raw.map((t) => t.cliente))).sort();
+
+  function titulosBase() {
+    return data.titulos_raw.filter((t) => passaFiltroCliente(t.cliente));
+  }
+  function titulosDoAno(ano) {
+    return titulosBase().filter((t) => t.vencimento.slice(0, 4) === String(ano));
+  }
+
+  function statsAno(ano) {
+    const titulos = titulosDoAno(ano);
+    let valorTotal = 0, valorVencido = 0, abertoVencido = 0, recebidoTotal = 0;
+    titulos.forEach((t) => {
+      valorTotal += t.valor_original;
+      recebidoTotal += t.recebido;
+      if (parseISO(t.vencimento) < hoje) {
+        valorVencido += t.valor_original;
+        if (t.valor_aberto > 0.005) abertoVencido += t.valor_aberto;
+      }
+    });
+    return {
+      ano, valorTotal, valorVencido, abertoVencido, recebidoTotal,
+      pctInadimplencia: valorVencido > 0.005 ? (abertoVencido / valorVencido * 100) : 0,
+      qtdTitulos: titulos.length,
+    };
+  }
+
+  function serieMensalAno(ano) {
+    const porMes = {};
+    titulosDoAno(ano).forEach((t) => {
+      const mm = t.vencimento.slice(5, 7);
+      const v = (porMes[mm] = porMes[mm] || { valor_original: 0, recebido: 0, valor_vencido: 0, aberto_vencido: 0, qtd: 0 });
+      v.valor_original += t.valor_original;
+      v.recebido += t.recebido;
+      v.qtd += 1;
+      if (parseISO(t.vencimento) < hoje) {
+        v.valor_vencido += t.valor_original;
+        if (t.valor_aberto > 0.005) v.aberto_vencido += t.valor_aberto;
+      }
+    });
+    return Object.keys(porMes).sort().map((mm) => {
+      const v = porMes[mm];
+      return {
+        label: mesesPt[mm] + "/" + String(ano).slice(2),
+        mesChave: mm + "/" + ano,
+        valor_original: v.valor_original,
+        recebido: v.recebido,
+        pct_recebido: v.valor_original > 0.005 ? (v.recebido / v.valor_original * 100) : 0,
+        pct_inadimplencia: v.valor_vencido > 0.005 ? (v.aberto_vencido / v.valor_vencido * 100) : 0,
+        qtd: v.qtd,
+      };
+    });
+  }
+
+  function agingDoAno(ano) {
+    const ordem = ["1-30 dias", "31-60 dias", "61-90 dias", "90+ dias"];
+    const buckets = {};
+    ordem.forEach((b) => (buckets[b] = { valor: 0, qtd: 0 }));
+    titulosDoAno(ano).forEach((t) => {
+      if (t.valor_aberto <= 0.005) return;
+      const venc = parseISO(t.vencimento);
+      if (venc >= hoje) return;
+      const b = bucketAtraso(diffDias(hoje, venc));
+      buckets[b].valor += t.valor_aberto;
+      buckets[b].qtd += 1;
+    });
+    return ordem.map((faixa) => ({ faixa, valor: buckets[faixa].valor, qtd: buckets[faixa].qtd }));
+  }
+
+  function clientesInadimplentesAno(ano) {
+    const porCliente = {};
+    titulosDoAno(ano).forEach((t) => {
+      if (t.valor_aberto <= 0.005) return;
+      const venc = parseISO(t.vencimento);
+      if (venc >= hoje) return;
+      const c = (porCliente[t.cliente] = porCliente[t.cliente] || { cliente: t.cliente, total_aberto: 0, titulos: [] });
+      c.total_aberto += t.valor_aberto;
+      c.titulos.push({ numero_nota: t.numero_nota, data_vencimento: formatarDataBR(t.vencimento), valor_aberto: t.valor_aberto, dias_atraso: diffDias(hoje, venc) });
+    });
+    const lista = Object.values(porCliente);
+    lista.forEach((c) => {
+      c.titulos.sort((a, b) => b.dias_atraso - a.dias_atraso);
+      c.qtd_titulos = c.titulos.length;
+      const key = c.cliente.trim().toUpperCase();
+      const infoCliente = clientesInfoPorNome[key];
+      const hist = tratativasPorCliente[key] || [];
+      c.status_atual = hist.length ? hist[0].status : "Pendente";
+      c.tratativas = hist.map((t) => ({ data: formatarDataBR(t.data), status: t.status, nota: t.nota, autor: t.autor }));
+      c.vendedor = infoCliente ? infoCliente.vendedor : null;
+      c.whatsapp_principal = infoCliente ? infoCliente.whatsapp_principal : null;
+      c.whatsapp_secundario = infoCliente ? infoCliente.whatsapp_secundario : null;
+    });
+    lista.sort((a, b) => b.total_aberto - a.total_aberto);
+    return lista;
+  }
+
+  function kpisOperacionais() {
+    // "mes vigente" e "vencendo em 7 dias" sao sempre relativos a hoje de verdade,
+    // independente do ano selecionado no filtro - so respeitam exclusao de clientes.
+    const base = titulosBase();
+    const limite = new Date(hoje.getTime() + 7 * 86400000);
+    let mesVigenteValor = 0, mesVigenteQtd = 0;
+    const proximos = [];
+    base.forEach((t) => {
+      if (t.valor_aberto <= 0.005) return;
+      const venc = parseISO(t.vencimento);
+      if (venc < hoje && t.vencimento.slice(0, 7) === mesAtualChave) {
+        mesVigenteValor += t.valor_aberto;
+        mesVigenteQtd += 1;
+      } else if (venc >= hoje && venc <= limite) {
+        proximos.push({ cliente: t.cliente, valor_aberto: t.valor_aberto, data_vencimento: formatarDataBR(t.vencimento), extra: "vence em " + diffDias(venc, hoje) + " dia(s)" });
+      }
+    });
+    proximos.sort((a, b) => diffDias(parseISO(a.data_vencimento.split("/").reverse().join("-")), parseISO(b.data_vencimento.split("/").reverse().join("-"))));
+    return { mesVigenteValor, mesVigenteQtd, proximos };
+  }
+
+  // ---------- Filtro de ano (segmentado) ----------
+  const filtroAnoEl = document.getElementById("filtro-ano");
+  filtroAnoEl.innerHTML = anosDisponiveis.map((a) => '<button data-ano="' + a + '">' + a + '</button>').join("");
+  filtroAnoEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    filtrosGlobais.ano = Number(btn.dataset.ano);
+    renderTudo();
+  });
+
+  // ---------- Toggle "excluir JVM*" ----------
+  const btnJvmEl = document.getElementById("btn-excluir-jvm");
+  btnJvmEl.addEventListener("click", () => {
+    filtrosGlobais.excluirJVM = !filtrosGlobais.excluirJVM;
+    renderTudo();
+  });
+
+  // ---------- Busca/exclusao de cliente especifico ----------
+  const buscaExcluirEl = document.getElementById("busca-excluir-cliente");
+  const sugestoesEl = document.getElementById("sugestoes-cliente");
+  buscaExcluirEl.addEventListener("input", () => {
+    const termo = buscaExcluirEl.value.trim().toUpperCase();
+    if (!termo) {
+      sugestoesEl.classList.remove("show");
+      sugestoesEl.innerHTML = "";
+      return;
+    }
+    const achados = todosClientesUnicos.filter((c) => c.toUpperCase().includes(termo) && !filtrosGlobais.clientesExcluidos.has(c.trim().toUpperCase())).slice(0, 8);
+    if (!achados.length) {
+      sugestoesEl.classList.remove("show");
+      return;
+    }
+    sugestoesEl.classList.add("show");
+    sugestoesEl.innerHTML = achados.map((c) => '<button data-add-excluir="' + c.replace(/"/g, "&quot;") + '">' + c + '</button>').join("");
+  });
+  sugestoesEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-add-excluir]");
+    if (!btn) return;
+    filtrosGlobais.clientesExcluidos.add(btn.dataset.addExcluir.trim().toUpperCase());
+    buscaExcluirEl.value = "";
+    sugestoesEl.classList.remove("show");
+    sugestoesEl.innerHTML = "";
+    renderTudo();
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".filtro-clientes")) sugestoesEl.classList.remove("show");
+  });
+
+  function renderChipsGlobais() {
+    const el = document.getElementById("chips-globais");
+    const chips = [];
+    if (filtrosGlobais.excluirJVM) chips.push({ key: "jvm", label: 'Sem clientes "JVM*"' });
+    filtrosGlobais.clientesExcluidos.forEach((nome) => chips.push({ key: "cliente:" + nome, label: "Sem " + nome }));
+    if (!chips.length) {
+      el.innerHTML = "";
+      return;
+    }
+    el.innerHTML = chips.map((c) => '<button class="chip-ativo" data-clear-global="' + c.key + '">' + c.label + ' &times;</button>').join("");
+  }
+  document.getElementById("chips-globais").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-clear-global]");
+    if (!btn) return;
+    const k = btn.dataset.clearGlobal;
+    if (k === "jvm") filtrosGlobais.excluirJVM = false;
+    else if (k.startsWith("cliente:")) filtrosGlobais.clientesExcluidos.delete(k.slice(8));
+    renderTudo();
+  });
+
+  // ---------- Comparativo anual (% inadimplencia por ano, lado a lado) ----------
+  function renderComparativoAnos() {
+    const stats = anosDisponiveis.map(statsAno);
+    const el = document.getElementById("comparativo-anos");
+    let html = "";
+    stats.forEach((s, i) => {
+      if (i > 0) {
+        const anterior = stats[i - 1];
+        const piorou = s.pctInadimplencia > anterior.pctInadimplencia;
+        html += '<div class="comparativo-seta ' + (piorou ? "piora" : "melhora") + '" title="' + (piorou ? "Piorou" : "Melhorou") + ' em relação a ' + anterior.ano + '">' + (piorou ? "▲" : "▼") + '</div>';
+      }
+      html += '<div class="comparativo-card"><div class="label">% Inadimplência ' + s.ano + '</div><div class="value">' + s.pctInadimplencia.toFixed(1) + '%</div>' +
+        '<div class="sub">' + fmtBRL(s.abertoVencido) + ' em aberto de ' + fmtBRL(s.valorVencido) + ' já vencido</div></div>';
+    });
+    el.innerHTML = html;
+  }
+
+  // ---------- KPIs operacionais (ano selecionado + hoje) ----------
+  function renderKPIs() {
+    const statSelecionado = statsAno(filtrosGlobais.ano);
+    const clientesAno = clientesInadimplentesAno(filtrosGlobais.ano);
+    const op = kpisOperacionais();
+    const qtdContatados = clientesAno.filter((c) => c.tratativas.length > 0).length;
+    const coberturaPct = clientesAno.length ? (qtdContatados / clientesAno.length * 100) : 0;
+    window.__ULTIMO_OP__ = op;
+    window.__ULTIMO_CLIENTES_ANO__ = clientesAno;
+
+    const kpiDefs = [
+      {
+        kpi: "total-ano",
+        hint: "Clique para ver todos",
+        label: "Inadimplência total de " + filtrosGlobais.ano,
+        value: fmtBRL(statSelecionado.abertoVencido),
+        sub: clientesAno.length + " clientes · " + statSelecionado.qtdTitulos + " títulos no ano",
+      },
+      {
+        kpi: "mes-vigente",
+        hint: "Clique para filtrar",
+        label: "Inadimplentes do mês vigente",
+        value: fmtBRL(op.mesVigenteValor),
+        sub: op.mesVigenteQtd + " título(s) vencido(s) este mês (sempre relativo a hoje)",
+      },
+      {
+        kpi: "vencendo-7-dias",
+        hint: "Clique para ver a lista",
+        label: "Vencendo em 7 dias",
+        value: fmtBRL(op.proximos.reduce((s, p) => s + p.valor_aberto, 0)),
+        sub: op.proximos.length + " título(s) a vencer",
+      },
+      {
+        kpi: "cobertura",
+        hint: "Clique para ver quem falta contatar",
+        label: "Cobertura de contato",
+        value: coberturaPct.toFixed(0) + "%",
+        sub: "clientes de " + filtrosGlobais.ano + " com pelo menos 1 tratativa",
+      },
+      (function () {
+        if (!data.kpis.variacao_semana) {
+          return { label: "Variação semanal", value: "—", sub: "ainda sem histórico (primeira geração)" };
+        }
+        const v = data.kpis.variacao_semana.variacao;
+        const caiu = v < 0;
+        return {
+          label: "Variação da dívida (7 dias)",
+          value: (caiu ? "↓ " : "↑ ") + fmtBRL(Math.abs(v)),
+          sub: (caiu ? "queda" : "alta") + " desde " + data.kpis.variacao_semana.data_referencia.split("-").reverse().join("/"),
+          subClass: caiu ? "good" : "crit",
+        };
+      })(),
+    ];
+    document.getElementById("kpis").innerHTML = kpiDefs.map((k) =>
+      '<div class="kpi' + (k.kpi ? " clickable" : "") + '"' + (k.kpi ? ' data-kpi="' + k.kpi + '" tabindex="0" role="button"' : "") + '>' +
+        '<div class="label">' + k.label + '</div><div class="value">' + k.value + '</div><div class="sub ' + (k.subClass || "") + '">' + k.sub + '</div>' +
+        (k.hint ? '<div class="hint">' + k.hint + '</div>' : '') +
+      '</div>'
+    ).join("");
+  }
 
   function desenharGraficos() {
+    const serieMensal = serieMensalAno(filtrosGlobais.ano);
     barChartMensalRecebido(document.getElementById("chart-mensal"), serieMensal, {
       isSelected: (d) => filtros.mes === d.mesChave,
       onClick: (d) => {
@@ -430,7 +721,8 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       },
     });
 
-    barChart(document.getElementById("chart-aging"), data.aging, {
+    const agingRamp = ["#E8A33D", "#D97F2E", "#C2551F", "#A82E27"];
+    barChart(document.getElementById("chart-aging"), agingDoAno(filtrosGlobais.ano), {
       xKey: "faixa", yKey: "valor",
       colorFor: (d, i) => agingRamp[i] || agingRamp[agingRamp.length - 1],
       formatY: (v) => "R$ " + Math.round(v / 1000) + "k",
@@ -444,25 +736,31 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     });
   }
 
-  // ---------- Vencendo nos proximos 7 dias (tabela dedicada, dados individuais por titulo) ----------
-  const proximosEl = document.getElementById("tabela-proximos");
-  if (!data.vencimentos_proximos || data.vencimentos_proximos.length === 0) {
-    proximosEl.innerHTML = '<div class="empty-state">Nenhum título vencendo nos próximos 7 dias.</div>';
-  } else {
-    proximosEl.innerHTML = '<table class="proximos-table"><thead><tr><th>Cliente</th><th class="num">Valor</th><th>Vencimento</th><th></th></tr></thead><tbody>' +
-      data.vencimentos_proximos.map(p =>
-        '<tr><td>' + p.cliente + '</td><td class="num">' + fmtBRL(p.valor_aberto) + '</td><td>' + p.data_vencimento + '</td><td>' + p.extra + '</td></tr>'
-      ).join("") + '</tbody></table>';
-  }
+  // ---------- Vencendo nos proximos 7 dias + Atividade recente (respeitam filtro de cliente) ----------
+  function renderProximosEAtividade() {
+    const op = window.__ULTIMO_OP__ || kpisOperacionais();
+    const proximosEl = document.getElementById("tabela-proximos");
+    if (!op.proximos.length) {
+      proximosEl.innerHTML = '<div class="empty-state">Nenhum título vencendo nos próximos 7 dias.</div>';
+    } else {
+      proximosEl.innerHTML = '<table class="proximos-table"><thead><tr><th>Cliente</th><th class="num">Valor</th><th>Vencimento</th><th></th></tr></thead><tbody>' +
+        op.proximos.map((p) =>
+          '<tr><td>' + p.cliente + '</td><td class="num">' + fmtBRL(p.valor_aberto) + '</td><td>' + p.data_vencimento + '</td><td>' + p.extra + '</td></tr>'
+        ).join("") + '</tbody></table>';
+    }
 
-  // ---------- Atividade recente ----------
-  const atividadeEl = document.getElementById("atividade");
-  if (!data.atividade_recente || data.atividade_recente.length === 0) {
-    atividadeEl.innerHTML = '<div class="empty-state">Nenhuma tratativa registrada ainda — a equipe pode começar pela lista de clientes abaixo.</div>';
-  } else {
-    atividadeEl.innerHTML = '<ul>' + data.atividade_recente.map(a =>
-      '<li><span class="a-date">' + a.data + '</span><span class="a-body"><strong>' + a.cliente + '</strong> — ' + a.status + (a.nota ? ": " + a.nota : "") + (a.autor ? ' <span style="color:var(--muted)">(' + a.autor + ')</span>' : '') + '</span></li>'
-    ).join("") + '</ul>';
+    const atividadeEl = document.getElementById("atividade");
+    const atividade = (data.tratativas_raw || [])
+      .filter((t) => passaFiltroCliente(t.cliente))
+      .sort((a, b) => b.data.localeCompare(a.data))
+      .slice(0, 20);
+    if (!atividade.length) {
+      atividadeEl.innerHTML = '<div class="empty-state">Nenhuma tratativa registrada ainda — a equipe pode começar pela lista de clientes abaixo.</div>';
+    } else {
+      atividadeEl.innerHTML = '<ul>' + atividade.map((a) =>
+        '<li><span class="a-date">' + formatarDataBR(a.data) + '</span><span class="a-body"><strong>' + a.cliente + '</strong> — ' + a.status + (a.nota ? ": " + a.nota : "") + (a.autor ? ' <span style="color:var(--muted)">(' + a.autor + ')</span>' : '') + '</span></li>'
+      ).join("") + '</ul>';
+    }
   }
 
   // ---------- Lista de clientes ----------
@@ -498,12 +796,23 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       '<button class="chip-ativo chip-clear-all" data-clear="all">Limpar filtros</button>';
   }
 
+  function renderTudo() {
+    document.getElementById("ano-titulo-lista").textContent = filtrosGlobais.ano;
+    filtroAnoEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", Number(b.dataset.ano) === filtrosGlobais.ano));
+    btnJvmEl.classList.toggle("active", filtrosGlobais.excluirJVM);
+    renderChipsGlobais();
+    renderComparativoAnos();
+    renderKPIs();
+    renderProximosEAtividade();
+    render();
+  }
+
   function render() {
     const termo = buscaEl.value.trim().toLowerCase();
-    const clientes = data.clientes.filter(c => {
+    const clientes = (window.__ULTIMO_CLIENTES_ANO__ || clientesInadimplentesAno(filtrosGlobais.ano)).filter(c => {
       if (filtros.status !== "Todos" && c.status_atual !== filtros.status) return false;
       if (termo && !c.cliente.toLowerCase().includes(termo)) return false;
-      if (filtros.mes && !c.titulos.some(t => mesFromData(t.data_vencimento) === filtros.mes)) return false;
+      if (filtros.mes && !c.titulos.some(t => labelMesDe(t.data_vencimento) === filtros.mes)) return false;
       if (filtros.aging && !c.titulos.some(t => bucketAtraso(t.dias_atraso) === filtros.aging)) return false;
       if (filtros.semContato && c.tratativas.length > 0) return false;
       return true;
@@ -513,7 +822,7 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     desenharGraficos();
     document.querySelectorAll("#kpis .kpi[data-kpi]").forEach(el => {
       const k = el.dataset.kpi;
-      const selected = (k === "mes-vigente" && filtros.mes === mesAtual) || (k === "cobertura" && filtros.semContato);
+      const selected = k === "cobertura" && filtros.semContato;
       el.classList.toggle("selected", selected);
     });
 
@@ -605,8 +914,15 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
       render();
       scrollToList();
     } else if (k === "mes-vigente") {
-      filtros.mes = (filtros.mes === mesAtual) ? null : mesAtual;
-      render();
+      const mesVigenteChave = mesAtualChave.split("-")[1] + "/" + mesAtualChave.split("-")[0];
+      if (filtrosGlobais.ano !== anoAtualReal) {
+        filtrosGlobais.ano = anoAtualReal;
+        filtros.mes = mesVigenteChave;
+        renderTudo();
+      } else {
+        filtros.mes = (filtros.mes === mesVigenteChave) ? null : mesVigenteChave;
+        render();
+      }
       scrollToList();
     } else if (k === "vencendo-7-dias") {
       document.getElementById("painel-proximos").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -629,6 +945,6 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
     }
   });
 
-  render();
+  renderTudo();
 })();
 </script>

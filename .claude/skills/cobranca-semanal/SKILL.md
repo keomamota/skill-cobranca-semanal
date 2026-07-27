@@ -15,12 +15,36 @@ Gera um painel HTML de cobranca e tres relatorios CSV de apoio a partir da plani
    atual, nao so o mes vigente) que ainda tem saldo em aberto, agrupados por cliente com subtotal
    por cliente. Esta lista existe para a equipe de cobranca trabalhar cliente a cliente (ligar,
    cobrar), nao so o atraso recente — inclui todo o historico de inadimplencia acumulada do ano.
-4. **Painel HTML (Artifact)** — dashboard visual com big numbers, grafico de contas a receber por
-   mes de vencimento (total faturado x recebido, com % recebido no topo de cada mes), grafico de
-   inadimplencia por faixa de atraso (aging), feed de atividade recente da equipe de cobranca, e
-   lista de clientes agrupada (expansivel, com busca e filtro por status) mostrando o historico de
-   tratativas de cada cliente. Pensado para a diretora acompanhar o trabalho da equipe de cobranca
-   e para a equipe registrar o resultado de cada contato.
+4. **Painel HTML (Artifact)** — dashboard visual com:
+   - Filtros globais (afetam TUDO: kpis, graficos, lista): seletor de ano, atalho "excluir
+     clientes JVM*" (o CEO tem forma de pagamento propria e polui a analise real da empresa se
+     nao for excluido), e busca pra excluir qualquer cliente especifico da analise.
+   - Comparativo de % de inadimplencia por ano lado a lado (com seta indicando se piorou ou
+     melhorou), independente do ano selecionado no filtro principal.
+   - Big numbers operacionais (inadimplencia do ano selecionado, mes vigente, vencendo 7 dias,
+     cobertura de contato, variacao semanal).
+   - Grafico de contas a receber por mes de vencimento (total faturado x recebido, com % de
+     INADIMPLENCIA do mes no topo — nao confundir com % recebido, que e outra metrica: % de
+     inadimplencia so considera o que ja venceu e ainda esta em aberto, dividido pelo que ja
+     venceu; enquanto % recebido divide pelo total faturado do mes, incluindo parcelas futuras).
+   - Grafico de inadimplencia por faixa de atraso (aging).
+   - Feed de atividade recente da equipe de cobranca.
+   - Lista de clientes agrupada (expansivel, com busca e filtro por status) mostrando o historico
+     de tratativas de cada cliente.
+   Todos os calculos (exceto CSVs e a variacao semanal) sao feitos no navegador a partir de uma
+   lista crua de titulos (`titulos_raw` no JSON), nao vem prontos do servidor — e assim que o
+   filtro de ano/cliente/JVM consegue recalcular tudo instantaneamente sem gerar o painel de novo.
+
+## Achado importante (27/07/2026): % de inadimplencia esta muito alto (75-99% por mes)
+
+Ao testar o comparativo, os numeros de inadimplencia por mes ficaram muito altos (ex: janeiro/2026
+com 90%+ ainda em aberto, mesmo 6+ meses depois). Confirmei que o calculo bate com os dados crus:
+a maioria dos titulos tem `Situacao=Aberta` e `Recebido=0` mesmo para meses ja bem antigos. Isso
+pode significar (a) a inadimplencia realmente e essa alta, ou (b) a coluna Situacao/Recebido em
+`db_contas_a_receber` nao esta sendo atualizada quando um titulo e pago (parecido com o problema
+que ja aconteceu com `db_contasareceber` estar incompleta). **Nao assuma que e um bug do
+script** — os numeros batem com os dados da planilha. Se a usuaria achar os numeros errados de
+novo, o proximo passo e perguntar como/quando a coluna "Situacao" e atualizada no processo dela.
 
 ## db_clientes (telefone e vendedor)
 

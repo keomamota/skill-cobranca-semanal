@@ -449,6 +449,30 @@ def main():
             {"data": t["data"].strftime("%d/%m/%Y"), "cliente": t["cliente"], "status": t["status"], "nota": t["nota"], "autor": t["autor"]}
             for t in sorted(tratativas, key=lambda t: t["data"], reverse=True)[:20]
         ],
+        # ---- dados brutos multi-ano, para o painel recalcular tudo no navegador
+        # (filtro de ano, exclusao de clientes, atalho "excluir JVM*") sem precisar
+        # rodar o script de novo a cada mudanca de filtro ----
+        "titulos_raw": [
+            {
+                "cliente": r["cliente"],
+                "numero_nota": r["numero_nota"],
+                "valor_original": r["valor_original"],
+                "valor_aberto": r["valor_aberto"],
+                "recebido": r["recebido"],
+                "vencimento": r["data_vencimento"].isoformat(),
+            }
+            for r in registros
+        ],
+        "anos_disponiveis": sorted({r["data_vencimento"].year for r in registros}),
+        "clientes_info": {
+            normaliza_nome(r["cliente"]): db_clientes[normaliza_nome(r["cliente"])]
+            for r in registros
+            if normaliza_nome(r["cliente"]) in db_clientes
+        },
+        "tratativas_raw": [
+            {"data": t["data"].isoformat(), "cliente": t["cliente"], "status": t["status"], "nota": t["nota"], "autor": t["autor"]}
+            for t in tratativas
+        ],
     }
 
     path_dashboard = os.path.join(saida_dir, f"dashboard_data_{data_str}.json")
