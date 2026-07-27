@@ -1,7 +1,12 @@
 [
   {
     "data": "2026-07-26",
-    "total_ano": 190532.07000000007,
-    "qtd_clientes": 106
+    "total_ano": 210046.1900000001,
+    "qtd_clientes": 109
+  },
+  {
+    "data": "2026-07-27",
+    "total_ano": 174455.27,
+    "qtd_clientes": 72
   }
 ]
