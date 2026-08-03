@@ -194,7 +194,35 @@
   footer.foot { margin-top: 32px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: all 0.2s; pointer-events: none; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Cortina de acesso: NAO e seguranca de verdade (usuario/senha ficam visiveis no
+     codigo-fonte da pagina) - so afasta quem abre o link sem querer. Ver SKILL.md. */
+  .cortina { position: fixed; inset: 0; background: var(--paper); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .cortina-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 32px 28px; box-shadow: var(--shadow); max-width: 340px; width: 100%; }
+  .cortina-card .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; color: var(--accent-text); font-weight: 700; margin-bottom: 6px; }
+  .cortina-card h1 { font-size: 22px; margin-bottom: 20px; }
+  .cortina-card label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; margin-top: 12px; }
+  .cortina-card input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font-size: 14px; }
+  .cortina-card .btn-primary { width: 100%; margin-top: 20px; justify-content: center; }
+  .cortina-erro { color: var(--crit); font-size: 13px; margin-top: 10px; display: none; }
+  .cortina-erro.show { display: block; }
+  body.nao-autenticado .wrap { display: none; }
 </style>
+
+<div class="cortina" id="cortina">
+  <div class="cortina-card">
+    <div class="eyebrow">Nobre Lar</div>
+    <h1>Acesso ao painel</h1>
+    <form id="form-cortina">
+      <label for="cortina-usuario">Usuário</label>
+      <input type="text" id="cortina-usuario" autocomplete="username">
+      <label for="cortina-senha">Senha</label>
+      <input type="password" id="cortina-senha" autocomplete="current-password">
+      <div class="cortina-erro" id="cortina-erro">Usuário ou senha incorretos.</div>
+      <button type="submit" class="btn btn-primary">Entrar</button>
+    </form>
+  </div>
+</div>
 
 <div class="wrap">
   <header class="top">
@@ -279,7 +307,7 @@ window.__SHEET_URL__ = "__SHEET_URL_VALUE__";
 window.__PIX_CHAVE__ = "__PIX_CHAVE_VALUE__";
 window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
 
-(function () {
+function iniciarPainel() {
   const data = window.__DASHBOARD_DATA__;
   const fmtBRL = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const toast = (msg) => {
@@ -1000,5 +1028,43 @@ window.__PIX_BENEFICIARIO__ = "__PIX_BENEFICIARIO_VALUE__";
   });
 
   renderTudo();
+}
+
+// ---------- Cortina de acesso ----------
+// NAO e seguranca de verdade: usuario/senha ficam visiveis em texto no codigo-fonte
+// desta pagina pra qualquer pessoa que abrir "ver codigo da pagina". Serve so pra
+// afastar quem abre o link sem querer/por engano. Combinado assim com a usuaria.
+(function () {
+  const CORTINA_USUARIO = "__CORTINA_USUARIO_VALUE__";
+  const CORTINA_SENHA = "__CORTINA_SENHA_VALUE__";
+  const CHAVE_SESSAO = "nobrelar_cobranca_autenticado";
+
+  const cortinaEl = document.getElementById("cortina");
+  const formEl = document.getElementById("form-cortina");
+  const erroEl = document.getElementById("cortina-erro");
+
+  function liberarAcesso() {
+    document.body.classList.remove("nao-autenticado");
+    cortinaEl.style.display = "none";
+    iniciarPainel();
+  }
+
+  if (sessionStorage.getItem(CHAVE_SESSAO) === "1") {
+    liberarAcesso();
+  } else {
+    document.body.classList.add("nao-autenticado");
+    formEl.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const usuario = document.getElementById("cortina-usuario").value.trim();
+      const senha = document.getElementById("cortina-senha").value;
+      if (usuario === CORTINA_USUARIO && senha === CORTINA_SENHA) {
+        sessionStorage.setItem(CHAVE_SESSAO, "1");
+        erroEl.classList.remove("show");
+        liberarAcesso();
+      } else {
+        erroEl.classList.add("show");
+      }
+    });
+  }
 })();
 </script>

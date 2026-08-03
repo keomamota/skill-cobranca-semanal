@@ -40,6 +40,32 @@ Gera um painel HTML de cobranca e tres relatorios CSV de apoio a partir da plani
    lista crua de titulos (`titulos_raw` no JSON), nao vem prontos do servidor — e assim que o
    filtro de ano/cliente/JVM consegue recalcular tudo instantaneamente sem gerar o painel de novo.
 
+## Cortina de acesso (usuario/senha)
+
+O painel tem uma tela de login antes de mostrar qualquer coisa (usuario `nobrelar` / senha
+`homecenter`, configuravel via 2 argumentos extras do `build_dashboard_html.py`). **Isso NAO e
+seguranca de verdade** — e um arquivo HTML estatico, entao qualquer pessoa que abrir "ver
+codigo-fonte da pagina" ve o usuario/senha em texto puro, alem de conseguir ler os dados direto
+do JSON embutido sem nem precisar logar. Foi combinado explicitamente assim com a usuaria: serve
+so pra afastar quem abre o link sem querer (ex: encaminhado por engano), nao pra proteger dado
+sensivel de verdade. Se em algum momento isso precisar virar protecao de verdade, as opcoes sao:
+senha de site no Netlify/Cloudflare Pages (nivel servidor, exige plano pago em alguns casos), ou
+o backend proprio (Worker) que ja esta nos planos futuros.
+
+## Deploy alternativo (Netlify manual, sem Cloudflare/Node)
+
+A usuaria pediu em determinado momento um `.zip` do painel pra subir manualmente em
+app.netlify.com/drop (drag-and-drop, sem precisar de Node/wrangler/conta configurada). Pra gerar:
+
+```bash
+cp "relatorios/painel_cobranca_<data>.html" /tmp/netlify-deploy/index.html
+cd /tmp/netlify-deploy && zip -r painel-cobranca-nobre-lar.zip index.html
+```
+
+O arquivo dentro do zip precisa se chamar `index.html` (e o que o Netlify espera como pagina
+inicial). Mandar o zip pro usuario com `SendUserFile`, nao publicar em nenhum lugar por conta
+propria (deploy manual e decisao dela).
+
 ## Historico: % de inadimplencia parecia muito alto (resolvido em 27/07/2026)
 
 Na primeira versao deste comparativo, a % de inadimplencia deu 81-89% (ate 90%+ em meses ja bem
