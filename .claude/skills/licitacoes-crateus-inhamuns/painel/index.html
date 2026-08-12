@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Radar de Licitacoes - Nobre Lar</title>
+<style>
+:root{
+  --bg:#FBF8F1; --surface:#FFFFFF; --surface-2:#F3EDDC;
+  --ink:#241D10; --ink-soft:#6E6450; --border:#E7DFC9;
+  --accent:#F2C10E; --accent-ink:#4A3800; --accent-soft:#FCEDB3;
+  --good:#2E7D4F; --good-bg:#E4F3E8;
+  --warn:#B8790F; --warn-bg:#FCEFD8;
+  --crit:#B23B3B; --crit-bg:#FBE7E4;
+  --info:#6E6450; --info-bg:#F0EADA;
+  --shadow: 0 1px 2px rgba(36,29,16,.06), 0 8px 24px -12px rgba(36,29,16,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15110A; --surface:#1E1910; --surface-2:#262014;
+    --ink:#F3EEDF; --ink-soft:#B7AC93; --border:#362D1C;
+    --accent:#F2C10E; --accent-ink:#2A1D00; --accent-soft:#4A3800;
+    --good:#5CBE8A; --good-bg:#173226;
+    --warn:#E7A93E; --warn-bg:#3A2C10;
+    --crit:#E2685F; --crit-bg:#3A1D1A;
+    --info:#B7AC93; --info-bg:#262014;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15110A; --surface:#1E1910; --surface-2:#262014;
+  --ink:#F3EEDF; --ink-soft:#B7AC93; --border:#362D1C;
+  --accent:#F2C10E; --accent-ink:#2A1D00; --accent-soft:#4A3800;
+  --good:#5CBE8A; --good-bg:#173226;
+  --warn:#E7A93E; --warn-bg:#3A2C10;
+  --crit:#E2685F; --crit-bg:#3A1D1A;
+  --info:#B7AC93; --info-bg:#262014;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 24px 64px;}
+
+header.topo{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:20px;
+  flex-wrap:wrap; padding-bottom:22px; margin-bottom:26px; border-bottom:1px solid var(--border);
+}
+.marca{display:flex; align-items:center; gap:12px;}
+.selo{
+  width:44px;height:44px;border-radius:10px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  font-weight:700;font-size:19px;color:var(--accent-ink);flex-shrink:0;
+}
+.titulo h1{
+  font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  font-weight:600; font-size:26px; margin:0 0 3px; letter-spacing:.2px; text-wrap:balance;
+}
+.titulo p{margin:0; color:var(--ink-soft); font-size:14px;}
+.meta-topo{text-align:right; font-size:12.5px; color:var(--ink-soft); line-height:1.6;}
+.meta-topo strong{color:var(--ink); font-weight:600;}
+
+.kpis{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px;
+}
+@media (max-width:760px){ .kpis{grid-template-columns:repeat(2,1fr);} }
+.kpi{
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:16px 18px; box-shadow:var(--shadow);
+}
+.kpi .rotulo{
+  font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);
+  margin-bottom:8px; font-weight:600;
+}
+.kpi .valor{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:26px; font-weight:600;
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em;
+}
+.kpi .valor.destaque{color:var(--accent-ink); background:none;}
+:root[data-theme="dark"] .kpi .valor.destaque, @media (prefers-color-scheme:dark){}
+
+.barra{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  flex-wrap:wrap; margin-bottom:18px;
+}
+.chips{display:flex; gap:8px; flex-wrap:wrap;}
+.chip{
+  border:1px solid var(--border); background:var(--surface); color:var(--ink-soft);
+  border-radius:999px; padding:6px 13px; font-size:13px; cursor:pointer; font-weight:500;
+  transition:background .12s,color .12s,border-color .12s;
+}
+.chip:hover{border-color:var(--accent);}
+.chip.ativo{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600;}
+.contador{font-size:13px;color:var(--ink-soft);}
+
+.grade{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px;}
+.card{
+  background:var(--surface); border:1px solid var(--border); border-radius:14px;
+  padding:18px; display:flex; flex-direction:column; gap:12px; box-shadow:var(--shadow);
+}
+.card .linha1{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.selo-modalidade{
+  font-size:11.5px; font-weight:600; color:var(--ink-soft); background:var(--surface-2);
+  border-radius:6px; padding:3px 9px; text-transform:uppercase; letter-spacing:.03em;
+}
+.pill{
+  font-size:12px; font-weight:600; border-radius:999px; padding:4px 11px; white-space:nowrap;
+}
+.pill.crit{background:var(--crit-bg); color:var(--crit);}
+.pill.warn{background:var(--warn-bg); color:var(--warn);}
+.pill.good{background:var(--good-bg); color:var(--good);}
+.pill.info{background:var(--info-bg); color:var(--info);}
+
+.card .cidade{font-size:13px; color:var(--ink-soft); font-weight:600;}
+.card .orgao{font-size:13px; color:var(--ink-soft);}
+.card .objeto{
+  font-size:15px; line-height:1.45; margin:0; display:-webkit-box;
+  -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;
+}
+.card .objeto.expandido{-webkit-line-clamp:unset;}
+.ver-mais{
+  font-size:12.5px; color:var(--ink-soft); background:none; border:none; cursor:pointer;
+  padding:0; text-decoration:underline; text-align:left; width:fit-content;
+}
+
+.rodape-card{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border-top:1px solid var(--border); padding-top:12px; margin-top:auto; flex-wrap:wrap;
+}
+.valor-estimado{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-weight:600; font-size:15px;
+  font-variant-numeric:tabular-nums;
+}
+.datas{font-size:12px; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.btn-link{
+  background:var(--accent); color:var(--accent-ink); text-decoration:none; font-weight:600;
+  font-size:13px; padding:8px 14px; border-radius:8px; white-space:nowrap;
+  transition:filter .12s;
+}
+.btn-link:hover{filter:brightness(0.95);}
+.btn-link:focus-visible, .chip:focus-visible, .ver-mais:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+
+.vazio{
+  text-align:center; padding:60px 20px; color:var(--ink-soft); font-size:15px;
+  border:1px dashed var(--border); border-radius:14px; background:var(--surface);
+}
+
+footer.rodape{margin-top:40px; font-size:12px; color:var(--ink-soft); text-align:center;}
+
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topo">
+    <div class="marca">
+      <div class="selo">NL</div>
+      <div class="titulo">
+        <h1>Radar de Licitações</h1>
+        <p>Crateús &amp; região dos Inhamuns (CE) · material de construção · Nobre Lar</p>
+      </div>
+    </div>
+    <div class="meta-topo">
+      Atualizado em <strong>12/08/2026 às 15h48</strong><br>
+      Janela consultada: últimos 30 dias · fonte: PNCP
+    </div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi">
+      <div class="rotulo">Editais abertos</div>
+      <div class="valor destaque">13</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Valor total em disputa</div>
+      <div class="valor">R$ 6.745.343,96</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Encerrando em 4 dias</div>
+      <div class="valor">5</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Cidades com edital aberto</div>
+      <div class="valor">8</div>
+    </div>
+  </section>
+
+  <div class="barra">
+    <div class="chips" id="chips-cidade"></div>
+    <div class="contador" id="contador">13 de 13 editais</div>
+  </div>
+
+  <section class="grade" id="grade"></section>
+  <div class="vazio" id="vazio" style="display:none;">Nenhum edital aberto encontrado para o filtro selecionado.</div>
+
+  <footer class="rodape">
+    Gerado automaticamente a partir do PNCP (Portal Nacional de Contratações Públicas) ·
+    filtro de palavras-chave configurável em <code>config/palavras_chave.json</code> ·
+    skill <code>licitacoes-crateus-inhamuns</code>
+  </footer>
+</div>
+
+<script>
+const EDITAIS = [{"numeroControlePNCP": "07954480000179-1-020587/2026", "cidade": "Tauá", "orgao": "ESTADO DO CEARA", "modalidade": "Dispensa", "objeto": "CONTRATAÇÃO DE SERVIÇO ESPECIALIZADO EM INSTALAÇÃO DE BOMBA SUBMERSA", "situacao": "Divulgada no PNCP", "valorEstimado": 2000.0, "dataPublicacao": "2026-08-07T15:11:12", "dataAbertura": "2026-08-12T16:00:00", "dataEncerramento": "2026-08-12T16:00:00", "link": null, "valorFmt": "R$ 2.000,00", "dataPublicacaoFmt": "07/08/2026 15h11", "dataEncerramentoFmt": "12/08/2026 16h00", "urgenciaClasse": "crit", "urgenciaTexto": "encerra hoje"}, {"numeroControlePNCP": "07993439000101-1-000071/2026", "cidade": "Nova Russas", "orgao": "MUNICIPIO DE NOVA RUSSAS", "modalidade": "Pregão - Eletrônico", "objeto": "REGISTRO DE PREÇOS PARA FUTURAS E EVENTUAIS AQUISIÇÕES DE MATERIAL ELÉTRICO, HIDRÁULICO, PINTURA, CONSTRUÇÃO E AINDA OUTROS DESTINADOS À MANUTENÇÃO PREDIAL EM GERAL, PARA ATENDER AS NECESSIDADES DOS DIVERSOS ÓRGÃOS QUE COMPÕEM O GOVERNO MUNICIPAL DE NOVA RUSSAS", "situacao": "Divulgada no PNCP", "valorEstimado": 3683821.41, "dataPublicacao": "2026-07-29T14:04:58", "dataAbertura": "2026-07-27T00:00:00", "dataEncerramento": "2026-08-13T08:59:00", "link": "http://compras.m2atecnologia.com.br/processos/publicacao/2414d0a98a5f483f96e185fb9808dbdb/registro-de-precos-para-futuras-e-eventuais-aquisi", "valorFmt": "R$ 3.683.821,41", "dataPublicacaoFmt": "29/07/2026 14h04", "dataEncerramentoFmt": "13/08/2026 08h59", "urgenciaClasse": "crit", "urgenciaTexto": "encerra em 17h"}, {"numeroControlePNCP": "07849532000147-1-000052/2026", "cidade": "Tauá", "orgao": "MUNICIPIO DE TAUA", "modalidade": "Pregão - Eletrônico", "objeto": "da LOCAÇÃO DE IMÓVEL DO TIPO TERRENO, COM ÁREA MÍNIMA DE 15.000 M², LOCALIZADO NO MUNICÍPIO DE TAUÁ/CE, QUE ATENDA ÀS CONDIÇÕES TÉCNICAS, OPERACIONAIS, URBANÍSTICAS E AMBIENTAIS NECESSÁRIAS À IMPLANTAÇÃO E OPERAÇÃO DE USINA DE PRODUÇÃO DE MASSA ASFÁLTICA, VISANDO ATENDER ÀS NECESSIDADES DA SECRETARIA DE INFRAESTRUTURA E SERVIÇOS PÚBLICOS", "situacao": "Divulgada no PNCP", "valorEstimado": 35280.0, "dataPublicacao": "2026-07-31T09:26:02", "dataAbertura": "2026-07-31T17:00:00", "dataEncerramento": "2026-08-14T07:30:00", "link": "", "valorFmt": "R$ 35.280,00", "dataPublicacaoFmt": "31/07/2026 09h26", "dataEncerramentoFmt": "14/08/2026 07h30", "urgenciaClasse": "warn", "urgenciaTexto": "encerra em 1 dia"}, {"numeroControlePNCP": "07540925000174-1-000026/2026", "cidade": "Catarina", "orgao": "MUNICIPIO DE CATARINA", "modalidade": "Concorrência - Eletrônica", "objeto": "Contratação de empresa para execução das obras de construção de uma passagem molhada na localidade do Sítio Boa Vista, no Município de Catarina", "situacao": "Divulgada no PNCP", "valorEstimado": 564435.81, "dataPublicacao": "2026-07-30T23:41:20", "dataAbertura": "2026-07-30T00:00:00", "dataEncerramento": "2026-08-14T09:59:00", "link": "http://compras.m2atecnologia.com.br/processos/publicacao/8f97a720ad794978bfb3926516c8992a/contratacao-de-empresa-para-execucao-das-obras-de", "valorFmt": "R$ 564.435,81", "dataPublicacaoFmt": "30/07/2026 23h41", "dataEncerramentoFmt": "14/08/2026 09h59", "urgenciaClasse": "warn", "urgenciaTexto": "encerra em 1 dia"}, {"numeroControlePNCP": "07954480000179-1-020827/2026", "cidade": "Poranga", "orgao": "ESTADO DO CEARA", "modalidade": "Dispensa", "objeto": "AQUISIÇÃO - MATERIAL DE CONSUMO - GÊNEROS ALIMENTÍCIOS 2026.2 (II)", "situacao": "Divulgada no PNCP", "valorEstimado": 12761.6, "dataPublicacao": "2026-08-11T15:44:42", "dataAbertura": "2026-08-14T17:00:00", "dataEncerramento": "2026-08-14T17:00:00", "link": null, "valorFmt": "R$ 12.761,60", "dataPublicacaoFmt": "11/08/2026 15h44", "dataEncerramentoFmt": "14/08/2026 17h00", "urgenciaClasse": "warn", "urgenciaTexto": "encerra em 2 dias"}, {"numeroControlePNCP": "07982036000167-1-000130/2026", "cidade": "Crateús", "orgao": "MUNICIPIO DE CRATEUS", "modalidade": "Pregão - Eletrônico", "objeto": "REGISTRO DE PREÇOS VISANDO FUTURAS E EVENTUAIS CONTRATAÇÕES DE EMPRESA ESPECIALIZADA PARA FORNECIMENTO DE PASSAGENS AÉREAS E HOSPEDAGENS, PARA A REALIZAÇÃO DE VIAGENS DE IDA E/OU VOLTA REGIONAIS, NACIONAIS E/OU INTERNACIONAIS E DE ACORDO COM AS NECESSIDADES DO MUNICÍPIO DE CRATEÚS - CE", "situacao": "Divulgada no PNCP", "valorEstimado": 1083250.0, "dataPublicacao": "2026-08-05T16:13:02", "dataAbertura": "2026-08-05T00:00:00", "dataEncerramento": "2026-08-20T08:29:00", "link": "http://precodereferencia.m2atecnologia.com.br/c/wuGMAD16QYqlrsnDSpH-Gg.TtgjuizS_3ka/", "valorFmt": "R$ 1.083.250,00", "dataPublicacaoFmt": "05/08/2026 16h13", "dataEncerramentoFmt": "20/08/2026 08h29", "urgenciaClasse": "good", "urgenciaTexto": "encerra em 7 dias"}, {"numeroControlePNCP": "07568231000145-1-000022/2026", "cidade": "Aiuaba", "orgao": "MUNICIPIO DE AIUABA", "modalidade": "Pregão - Eletrônico", "objeto": "AQUISIÇÃO DE EQUIPAMENTO DE RAIO-X, COM RECURSOS ORIUNDOS DO CONVÊNIO Nº 53/2026, CELEBRADO COM O GOVERNO DO ESTADO DO CEARÁ, POR INTERMÉDIO DA SECRETARIA DA SAÚDE DO ESTADO DO CEARÁ, A SER INSTALADO NO HOSPITAL NOSSA SENHORA DO PATROCÍNIO, LOCALIZADO NA SEDE DO MUNICÍPIO, PARA ATENDER AS NECESSIDADES DA SECRETARIA MUNICIPAL DE SAÚDE DO MUNICÍPIO DE AIUABA/CE", "situacao": "Divulgada no PNCP", "valorEstimado": 342256.67, "dataPublicacao": "2026-08-10T17:29:33", "dataAbertura": "2026-08-07T00:00:00", "dataEncerramento": "2026-08-20T08:59:00", "link": "http://precodereferencia.m2atecnologia.com.br/c/AkMADIZ-T_-3llMA-0Nz6w.5RYI90_DXK40/", "valorFmt": "R$ 342.256,67", "dataPublicacaoFmt": "10/08/2026 17h29", "dataEncerramentoFmt": "20/08/2026 08h59", "urgenciaClasse": "good", "urgenciaTexto": "encerra em 7 dias"}, {"numeroControlePNCP": "07982010000119-1-000024/2026", "cidade": "Novo Oriente", "orgao": "MUNICIPIO DE NOVO ORIENTE", "modalidade": "Pregão - Eletrônico", "objeto": "CONTRATAÇÃO DE PESSOA JURÍDICA ESPECIALIZADA PARA A PRESTAÇÃO DE SERVIÇOS TÉCNICOS DE ASSESSORIA E CONSULTORIA EM APOIO AO FORTALECIMENTO DO SISTEMA DE CONTROLE INTERNO (SCI), COMPREENDENDO O PLANEJAMENTO, ACOMPANHAMENTO, ORIENTAÇÃO TÉCNICA, MONITORAMENTO, AVALIAÇÃO DE DESEMPENHO, GESTÃO PATRIMONIAL E IMPLEMENTAÇÃO DE AÇÕES VOLTADAS À ADEQUAÇÃO CONTÍNUA DOS PROCEDIMENTOS ADMINISTRATIVOS ÀS DIRETRIZES, NORMAS E EXIGÊNCIAS ESTABELECIDAS PELA INSTRUÇÃO NORMATIVA TCE/CE Nº 01/2025 E DEMAIS LEGISLAÇÕES APLICÁVEIS, VISANDO AO APRIMORAMENTO DOS MECANISMOS DE GOVERNANÇA, CONTROLE, GESTÃO DE RISCOS E CONFORMIDADE, PARA ATENDER ÀS NECESSIDADES DAS DIVERSAS SECRETARIAS E ÓRGÃOS DA ADMINISTRAÇÃO PÚBLICA DO MUNICÍPIO DE NOVO ORIENTE – CE.", "situacao": "Divulgada no PNCP", "valorEstimado": 468919.8, "dataPublicacao": "2026-08-06T10:45:42", "dataAbertura": "2026-08-05T00:00:00", "dataEncerramento": "2026-08-20T08:59:00", "link": "http://precodereferencia.m2atecnologia.com.br/c/rv1sbU1_QduRxkQOpOk95g.sa1WZ0yl5b6A/", "valorFmt": "R$ 468.919,80", "dataPublicacaoFmt": "06/08/2026 10h45", "dataEncerramentoFmt": "20/08/2026 08h59", "urgenciaClasse": "good", "urgenciaTexto": "encerra em 7 dias"}, {"numeroControlePNCP": "10744098000145-1-000150/2026", "cidade": "Crateús", "orgao": "INSTITUTO FEDERAL DE EDUCACAO, CIENCIA E TECNOLOGIA DO CEARA", "modalidade": "Dispensa", "objeto": "Contratação de empresa para o fornecimento de serviço de seguro parta os veículos do IFCE campus Crateús.", "situacao": "Divulgada no PNCP", "valorEstimado": 15512.0, "dataPublicacao": "2026-07-29T16:51:15", "dataAbertura": null, "dataEncerramento": null, "link": null, "valorFmt": "R$ 15.512,00", "dataPublicacaoFmt": "29/07/2026 16h51", "dataEncerramentoFmt": "—", "urgenciaClasse": "info", "urgenciaTexto": "sem prazo definido"}, {"numeroControlePNCP": "07982036000167-1-000134/2026", "cidade": "Crateús", "orgao": "MUNICIPIO DE CRATEUS", "modalidade": "Dispensa", "objeto": "CONTRATAÇÃO DE EMPRESA ESPECIALIZADA PARA PRESTAÇÃO DE SERVIÇOS DE PLANEJAMENTO, ORGANIZAÇÃO, COORDENAÇÃO, EXECUÇÃO E APOIO LOGÍSTICO DE AÇÕES E PROJETOS CULTURAIS DESTINADOS AO FORTALECIMENTO, PROMOÇÃO, PRESERVAÇÃO E VALORIZAÇÃO DA CULTURA DO MUNICÍPIO DE CRATEÚS-CE.", "situacao": "Divulgada no PNCP", "valorEstimado": 28837.23, "dataPublicacao": "2026-08-06T16:32:55", "dataAbertura": null, "dataEncerramento": null, "link": "http://precodereferencia.m2atecnologia.com.br/c/nj64TAmtSsuPViOI4cDKuA.4cyxCchKh8Ra/", "valorFmt": "R$ 28.837,23", "dataPublicacaoFmt": "06/08/2026 16h32", "dataEncerramentoFmt": "—", "urgenciaClasse": "info", "urgenciaTexto": "sem prazo definido"}, {"numeroControlePNCP": "13427383000120-1-000021/2026", "cidade": "Crateús", "orgao": "CONSORCIO PUBLICO DE SAUDE DA MICRORREGIAO DE CRATEUS - CPSMCR", "modalidade": "Inexigibilidade", "objeto": "CONTRATAÇÃO DE EMPRESA OU PROFISSIONAL DE NOTÓRIA ESPECIALIZAÇÃO PARA PRESTAÇÃO DE SERVIÇOS TÉCNICOS ESPECIALIZADOS DE CONSULTORIA E ASSESSORAMENTO ESTRATÉGICO EM CONTABILIDADE APLICADA AO SETOR PÚBLICO E GESTÃO FISCAL DE CONSÓRCIOS PÚBLICOS INTERFEDERATIVOS.", "situacao": "Divulgada no PNCP", "valorEstimado": 218802.36, "dataPublicacao": "2026-07-21T11:22:51", "dataAbertura": null, "dataEncerramento": null, "link": "http://compras.m2atecnologia.com.br/processos/publicacao/9eae315176db4cf7b2ed29e1a5fed9f4/contratacao-de-empresa-ou-profissional-de-notoria", "valorFmt": "R$ 218.802,36", "dataPublicacaoFmt": "21/07/2026 11h22", "dataEncerramentoFmt": "—", "urgenciaClasse": "info", "urgenciaTexto": "sem prazo definido"}, {"numeroControlePNCP": "10462364000147-1-000063/2026", "cidade": "Ipaporanga", "orgao": "MUNICIPIO DE IPAPORANGA", "modalidade": "Dispensa", "objeto": "Prestação de serviços técnicos especializados de assessoria e consultoria voltados ao monitoramento dos Conselhos Municipais de Educação e de Saúde, abrangendo orientação fiscal, suporte à elaboração e análise da prestação de contas, bem como no acompanhamento e controle das fontes de recursos no âmbito da execução orçamentária", "situacao": "Divulgada no PNCP", "valorEstimado": 62800.08, "dataPublicacao": "2026-07-13T16:07:13", "dataAbertura": null, "dataEncerramento": null, "link": "http://compras.m2atecnologia.com.br/processos/publicacao/4ec4048f71aa40f5b559f5cea15a2a9a/prestacao-de-servicos-tecnicos-especializados-de-a", "valorFmt": "R$ 62.800,08", "dataPublicacaoFmt": "13/07/2026 16h07", "dataEncerramentoFmt": "—", "urgenciaClasse": "info", "urgenciaTexto": "sem prazo definido"}, {"numeroControlePNCP": "10462364000147-1-000070/2026", "cidade": "Ipaporanga", "orgao": "MUNICIPIO DE IPAPORANGA", "modalidade": "Dispensa", "objeto": "Constitui objeto da presente contratação a contratação do Serviço de Apoio às Micro e Pequenas Empresas do Estado do Ceará – SEBRAE/CE para a prestação de serviços técnicos especializados de consultorias gerenciais, consultorias tecnológicas, instrutorias e capacitações, destinados ao fortalecimento das cadeias produtivas do agronegócio, comércio, serviços, artesanato, turismo, gastronomia e demais segmentos econômicos do Município de Ipaporanga/CE, mediante execução de ações vinculadas ao Programa Cidade Empreendedora.", "situacao": "Divulgada no PNCP", "valorEstimado": 226667.0, "dataPublicacao": "2026-08-12T10:32:17", "dataAbertura": null, "dataEncerramento": null, "link": "http://precodereferencia.m2atecnologia.com.br/c/KCL_YOmGTzeWse73WgOqRA.rIBravM62MNR/", "valorFmt": "R$ 226.667,00", "dataPublicacaoFmt": "12/08/2026 10h32", "dataEncerramentoFmt": "—", "urgenciaClasse": "info", "urgenciaTexto": "sem prazo definido"}];
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+
+let filtroCidade = null;
+
+function render() {
+  const grade = document.getElementById('grade');
+  const vazio = document.getElementById('vazio');
+  const contador = document.getElementById('contador');
+  const lista = filtroCidade ? EDITAIS.filter(e => e.cidade === filtroCidade) : EDITAIS;
+
+  contador.textContent = lista.length + ' de ' + EDITAIS.length + ' editais';
+  grade.innerHTML = '';
+  vazio.style.display = lista.length ? 'none' : 'block';
+
+  for (const e of lista) {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="linha1">
+        <span class="selo-modalidade">${escapeHtml(e.modalidade || '—')}</span>
+        <span class="pill ${e.urgenciaClasse}">${escapeHtml(e.urgenciaTexto)}</span>
+      </div>
+      <div class="cidade">${escapeHtml(e.cidade)} · <span class="orgao">${escapeHtml(e.orgao || 'órgão não informado')}</span></div>
+      <p class="objeto">${escapeHtml(e.objeto || '(objeto não informado)')}</p>
+      <button class="ver-mais" type="button" data-acao="expandir">ver objeto completo</button>
+      <div class="rodape-card">
+        <div>
+          <div class="valor-estimado">${escapeHtml(e.valorFmt)}</div>
+          <div class="datas">publicado ${escapeHtml(e.dataPublicacaoFmt)} · encerra ${escapeHtml(e.dataEncerramentoFmt)}</div>
+        </div>
+        ${e.link ? `<a class="btn-link" href="${escapeHtml(e.link)}" target="_blank" rel="noopener">Abrir no PNCP</a>` : ''}
+      </div>
+    `;
+    const objetoEl = card.querySelector('.objeto');
+    const botaoEl = card.querySelector('[data-acao="expandir"]');
+    botaoEl.addEventListener('click', () => {
+      objetoEl.classList.toggle('expandido');
+      botaoEl.textContent = objetoEl.classList.contains('expandido') ? 'recolher' : 'ver objeto completo';
+    });
+    grade.appendChild(card);
+  }
+}
+
+function montarChips() {
+  const cidades = [...new Set(EDITAIS.map(e => e.cidade))].sort();
+  const container = document.getElementById('chips-cidade');
+  const todas = document.createElement('button');
+  todas.className = 'chip ativo';
+  todas.type = 'button';
+  todas.textContent = 'Todas as cidades';
+  todas.addEventListener('click', () => {
+    filtroCidade = null;
+    [...container.children].forEach(c => c.classList.remove('ativo'));
+    todas.classList.add('ativo');
+    render();
+  });
+  container.appendChild(todas);
+
+  for (const cidade of cidades) {
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.type = 'button';
+    chip.textContent = cidade;
+    chip.addEventListener('click', () => {
+      filtroCidade = cidade;
+      [...container.children].forEach(c => c.classList.remove('ativo'));
+      chip.classList.add('ativo');
+      render();
+    });
+    container.appendChild(chip);
+  }
+}
+
+montarChips();
+render();
+</script>
+</body>
+</html>

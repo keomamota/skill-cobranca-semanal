@@ -1,0 +1,21 @@
+{
+  "descricao": "Municipios cobertos: Crateus + regiao dos Inhamuns (Ceara), onde a Nobre Lar tem interesse em atender fornecimento de material de construcao para orgaos publicos.",
+  "uf": "CE",
+  "municipios": [
+    { "nome": "Crateús", "codigoIbge": "2304103" },
+    { "nome": "Tauá", "codigoIbge": "2313302" },
+    { "nome": "Independência", "codigoIbge": "2305605" },
+    { "nome": "Novo Oriente", "codigoIbge": "2309409" },
+    { "nome": "Aiuaba", "codigoIbge": "2300408" },
+    { "nome": "Parambu", "codigoIbge": "2310308" },
+    { "nome": "Quiterianópolis", "codigoIbge": "2311264" },
+    { "nome": "Catarina", "codigoIbge": "2303600" },
+    { "nome": "Ararendá", "codigoIbge": "2301257" },
+    { "nome": "Arneiroz", "codigoIbge": "2301505" },
+    { "nome": "Antonina do Norte", "codigoIbge": "2300804" },
+    { "nome": "Ipaporanga", "codigoIbge": "2305654" },
+    { "nome": "Poranga", "codigoIbge": "2311009" },
+    { "nome": "Nova Russas", "codigoIbge": "2309300" },
+    { "nome": "Ipueiras", "codigoIbge": "2305902" }
+  ]
+}
