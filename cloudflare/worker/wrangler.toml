@@ -1,0 +1,13 @@
+name = "nobrelar-cobranca-api"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nobrelar-contas-a-receber"
+database_id = "dae9b502-7088-4d37-a6bc-5160aa6192d5"

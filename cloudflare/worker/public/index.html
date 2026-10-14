@@ -1,0 +1,1624 @@
+<!doctype html>
+<!-- build: 2026-10-14T2-valor-real-x-juros -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nobre Lar — Painel de Cobrança</title>
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --surface-2: #efedE6;
+    --border: #e2ded2;
+    --ink: #1c1a14;
+    --ink-dim: #6b6555;
+    --ink-faint: #a39c88;
+    --accent: #f2c10e;
+    --accent-ink: #3d2f00;
+    --accent-text: #8a6d00;
+    --ok: #1f7a4d;
+    --ok-bg: #e6f4ec;
+    --ok2: #0f766e;
+    --ok2-bg: #e3f3f1;
+    --warn: #b45f06;
+    --warn-bg: #fbeee0;
+    --danger: #b3261e;
+    --danger-bg: #fbe8e6;
+    --info: #46567a;
+    --info-bg: #eaedf5;
+    --shadow: 0 1px 2px rgba(28,26,20,.04), 0 8px 24px -12px rgba(28,26,20,.12);
+    --header-shadow: 0 1px 0 rgba(28,26,20,.05), 0 6px 18px -14px rgba(28,26,20,.25);
+    --radius: 10px;
+    --focus: #8a6d00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15140f;
+      --surface: #1e1c15;
+      --surface-2: #262319;
+      --border: #35311f;
+      --ink: #f1eee2;
+      --ink-dim: #b8b09a;
+      --ink-faint: #756e58;
+      --accent: #f2c10e;
+      --accent-ink: #241c00;
+      --accent-text: #f2c10e;
+      --ok: #4ade91;
+      --ok-bg: #12291d;
+      --ok2: #4fd8cc;
+      --ok2-bg: #0f2b28;
+      --warn: #f0a556;
+      --warn-bg: #2e2010;
+      --danger: #ff8a80;
+      --danger-bg: #331512;
+      --info: #a6b3d6;
+      --info-bg: #232840;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px -12px rgba(0,0,0,.5);
+      --header-shadow: 0 1px 0 rgba(0,0,0,.4), 0 10px 26px -16px rgba(0,0,0,.6);
+      --focus: #f2c10e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15140f;
+    --surface: #1e1c15;
+    --surface-2: #262319;
+    --border: #35311f;
+    --ink: #f1eee2;
+    --ink-dim: #b8b09a;
+    --ink-faint: #756e58;
+    --accent: #f2c10e;
+    --accent-ink: #241c00;
+    --accent-text: #f2c10e;
+    --ok: #4ade91;
+    --ok-bg: #12291d;
+    --ok2: #4fd8cc;
+    --ok2-bg: #0f2b28;
+    --warn: #f0a556;
+    --warn-bg: #2e2010;
+    --danger: #ff8a80;
+    --danger-bg: #331512;
+    --info: #a6b3d6;
+    --info-bg: #232840;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px -12px rgba(0,0,0,.5);
+    --header-shadow: 0 1px 0 rgba(0,0,0,.4), 0 10px 26px -16px rgba(0,0,0,.6);
+    --focus: #f2c10e;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent); color: var(--accent-ink); }
+  a { color: var(--accent-text); }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  button { font: inherit; }
+
+  /* ---------- login curtain ---------- */
+  #curtain {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+  #curtain .box {
+    width: min(360px, 92vw);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px;
+    text-align: center;
+  }
+  #curtain .mark {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--accent); color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 20px; margin: 0 auto 16px;
+  }
+  #curtain h1 { font-size: 17px; margin: 0 0 4px; }
+  #curtain p { font-size: 13px; color: var(--ink-dim); margin: 0 0 20px; }
+  #curtain input {
+    width: 100%; padding: 10px 12px; margin-bottom: 10px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--ink); font-size: 14px;
+  }
+  #curtain button {
+    width: 100%; padding: 10px 12px; border: none; border-radius: 8px;
+    background: var(--accent); color: var(--accent-ink); font-weight: 700;
+    cursor: pointer; font-size: 14px;
+  }
+  #curtain .err { color: var(--danger); font-size: 12.5px; min-height: 16px; margin-top: 8px; }
+
+  /* ---------- shell ---------- */
+  #app { display: none; }
+  header.top {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    box-shadow: var(--header-shadow);
+  }
+  .top-inner {
+    max-width: 1180px; margin: 0 auto; padding: 20px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; font-weight: 800; letter-spacing: -.01em; }
+  .brand .mark {
+    width: 46px; height: 46px; border-radius: 12px;
+    background: linear-gradient(155deg, var(--accent), #d9a600);
+    color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    box-shadow: 0 2px 6px -1px rgba(180,140,0,.45);
+  }
+  .brand .titles { display: flex; flex-direction: column; line-height: 1.25; }
+  .brand .titles .sub { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-faint); }
+  .brand .titles .main { font-size: 19px; }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink-dim); }
+  #syncStatus { display: flex; align-items: center; gap: 6px; }
+  .hiper-sync { padding: 3px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 11.5px; color: var(--ink-dim); white-space: nowrap; }
+  .hiper-sync.stale { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); }
+  .dot.ok { background: var(--ok); }
+  .dot.bad { background: var(--danger); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
+
+  /* ---------- filters ---------- */
+  .filters {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 20px;
+  }
+  .filters select, .filters input[type="search"] {
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px;
+    background: var(--surface); color: var(--ink); font-size: 13px;
+  }
+  .filters input[type="search"] { min-width: 220px; flex: 1; }
+  .chip {
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); font-size: 12.5px; cursor: pointer; color: var(--ink-dim);
+    white-space: nowrap;
+  }
+  .chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+
+  /* ---------- kpis ---------- */
+  .kpis {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px;
+  }
+  @media (max-width: 1040px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 640px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; color: inherit; width: 100%; display: block; font-family: inherit;
+  }
+  .kpi .label { font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink); margin-bottom: 8px; }
+  .kpi .value { font-size: 24px; font-weight: 800; letter-spacing: -.01em; }
+  .kpi .sub { font-size: 12px; color: var(--ink-dim); margin-top: 4px; }
+  .kpi.danger .value { color: var(--danger); }
+  .kpi.warn .value { color: var(--warn); }
+  .kpi.ok .value { color: var(--ok); }
+  .kpi.ok2 .value { color: var(--ok2); }
+  .kpi.info .value { color: var(--info); }
+  .kpi.clickable { cursor: pointer; text-align: left; font-family: inherit; transition: border-color .12s, box-shadow .12s; }
+  .kpi.clickable:hover { border-color: var(--ink-faint); }
+  .kpi.clickable.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .kpi.clickable.selected .label { color: var(--accent-text); }
+
+  /* ---------- section ---------- */
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
+  .section h2 { font-size: 14px; margin: 0; padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .section h2 .count { font-weight: 500; color: var(--ink-dim); font-size: 12.5px; }
+
+  /* ---------- monthly chart ---------- */
+  .chart-wrap { padding: 18px; overflow-x: auto; }
+  .chart-row { display: flex; align-items: flex-end; gap: 6px; min-width: 640px; height: 190px; }
+  .chart-col { flex: 1; min-width: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; padding: 4px 2px; border-radius: 6px; border: 1px solid transparent; transition: border-color .12s, background .12s; }
+  .chart-col:hover { background: var(--surface-2); }
+  .chart-col.selected { border-color: var(--accent); background: var(--surface-2); }
+  .chart-col.selected .chart-mes { color: var(--accent-text); font-weight: 700; }
+  .chart-pct { font-size: 10.5px; font-weight: 700; color: var(--ink-dim); margin-bottom: 4px; white-space: nowrap; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 130px; width: 100%; justify-content: center; }
+  .chart-bar { width: 40%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height .2s; }
+  .chart-bar.faturado { background: var(--border); }
+  .chart-bar.recebido { background: var(--ok); }
+  .chart-mes { font-size: 11px; color: var(--ink-faint); margin-top: 8px; text-transform: uppercase; }
+  .chart-legend { display: flex; gap: 16px; padding: 0 18px 16px; font-size: 12px; color: var(--ink-dim); }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .chart-legend .dot-legend { width: 10px; height: 10px; border-radius: 3px; }
+  .chart-legend .dot-legend.faturado { background: var(--border); }
+  .chart-legend .dot-legend.recebido { background: var(--ok); }
+
+  /* ---------- client list ---------- */
+  .client-row {
+    display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; align-items: center;
+    padding: 12px 18px; border-bottom: 1px solid var(--border); cursor: pointer;
+  }
+  .client-row:last-child { border-bottom: none; }
+  .client-row:hover { background: var(--surface-2); }
+  .client-name { font-weight: 600; font-size: 13.5px; }
+  .client-meta { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+  .client-saldo { font-weight: 700; font-size: 13.5px; text-align: right; }
+  .client-saldo-original { font-weight: 400; font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+  .client-saldo-tag { font-weight: 400; font-size: 10px; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-faint); }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+  .badge.vencido { background: var(--danger-bg); color: var(--danger); }
+  .badge.aberto { background: var(--warn-bg); color: var(--warn); }
+  .badge.recuperado { background: var(--ok-bg); color: var(--ok); }
+  .badge.parcial { background: var(--warn-bg); color: var(--warn); }
+  .chev { color: var(--ink-faint); transition: transform .15s; }
+  .client-row.open .chev { transform: rotate(90deg); }
+
+  .client-detail { display: none; padding: 4px 18px 18px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .client-detail.open { display: block; }
+  .detail-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; padding-top: 12px; }
+  @media (max-width: 760px) { .detail-grid { grid-template-columns: 1fr; } }
+  .doc-item { display: flex; justify-content: space-between; font-size: 12.5px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .doc-item:last-child { border-bottom: none; }
+  .doc-item .num { color: var(--ink-dim); }
+  .doc-item-check {
+    display: grid; grid-template-columns: 16px 1fr auto; align-items: center; column-gap: 10px;
+    cursor: pointer; padding: 6px 0; border-bottom: 1px dashed var(--border); font-size: 12.5px;
+  }
+  .doc-item-check:last-child { border-bottom: none; }
+  .doc-item-check:hover { background: var(--surface-2); }
+  .doc-check { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+  .doc-info { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .doc-info .doc-num { color: var(--ink); overflow-wrap: break-word; }
+  .doc-info .doc-sub { font-size: 11px; color: var(--ink-faint); }
+  .doc-info .doc-juros { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .doc-item-check .tabular { white-space: nowrap; font-weight: 600; }
+
+  .tratativa-item { padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 12.5px; }
+  .tratativa-item:last-child { border-bottom: none; }
+  .tratativa-item .meta { color: var(--ink-faint); font-size: 11px; margin-top: 2px; }
+
+  textarea, .detail-grid select, .detail-grid input {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px;
+    background: var(--surface); color: var(--ink); font-size: 13px; font-family: inherit;
+  }
+  .btn {
+    padding: 8px 14px; border: none; border-radius: 7px; background: var(--accent);
+    color: var(--accent-ink); font-weight: 700; font-size: 12.5px; cursor: pointer;
+  }
+  .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--ink); font-weight: 600; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+  .wa-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 7px; background: var(--ok-bg); color: var(--ok); font-weight: 700; font-size: 12px; text-decoration: none; }
+
+  .empty { padding: 32px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+  #loadErr { padding: 32px; text-align: center; color: var(--danger); font-size: 13px; }
+
+  /* ---------- top-level tabs ---------- */
+  .tabs { display: flex; gap: 4px; margin-left: 8px; }
+  .tab-btn {
+    padding: 7px 14px; border: none; border-radius: 7px; background: transparent;
+    color: var(--ink-dim); font-weight: 600; font-size: 13px; cursor: pointer;
+  }
+  .tab-btn:hover { background: var(--surface-2); }
+  .tab-btn.active { background: var(--accent); color: var(--accent-ink); }
+
+  /* ---------- sangrias tab ---------- */
+  .sangria-row {
+    display: grid; grid-template-columns: 90px 110px 90px 1fr 110px auto; gap: 12px; align-items: center;
+    padding: 10px 18px; border-bottom: 1px solid var(--border); font-size: 12.5px;
+  }
+  .sangria-row:last-child { border-bottom: none; }
+  .sangria-row:hover { background: var(--surface-2); }
+  .sangria-row .op { font-weight: 700; }
+  .sangria-row .op.sangria { color: var(--danger); }
+  .sangria-row .op.suprimento { color: var(--ok); }
+  .sangria-row .valor { text-align: right; font-weight: 700; }
+  .sangria-row .valor.atencao { color: var(--warn); }
+  .sangria-row .motivo { overflow-wrap: break-word; }
+  .sangria-row .loja-badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-dim); white-space: nowrap; }
+  .sangria-head {
+    display: grid; grid-template-columns: 90px 110px 90px 1fr 110px auto; gap: 12px;
+    padding: 8px 18px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--ink-faint); border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 760px) {
+    .sangria-row, .sangria-head { grid-template-columns: 1fr 1fr; }
+    .sangria-head span:nth-child(3), .sangria-head span:nth-child(6) { display: none; }
+  }
+
+  /* ---------- sangrias: grupos (pessoa/categoria) ---------- */
+  .grupo-row {
+    display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; align-items: center;
+    padding: 12px 18px; border-bottom: 1px solid var(--border); cursor: pointer;
+  }
+  .grupo-row:last-child { border-bottom: none; }
+  .grupo-row:hover { background: var(--surface-2); }
+  .grupo-row.open .chev { transform: rotate(90deg); }
+  .grupo-nome { font-weight: 600; font-size: 13.5px; }
+  .grupo-meta { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+  .grupo-total { font-weight: 700; font-size: 13.5px; text-align: right; }
+  .grupo-detail { display: none; padding: 6px 18px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .grupo-detail.open { display: block; }
+  .grupo-detail .doc-item { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .grupo-detail .doc-item:last-child { border-bottom: none; }
+  .grupo-detail .doc-item .num { color: var(--ink-dim); }
+  .grupo-detail .doc-item .sub { font-size: 11px; color: var(--ink-faint); }
+</style>
+</head>
+<body>
+
+<div id="curtain">
+  <div class="box">
+    <div class="mark">NL</div>
+    <h1>Painel de Cobrança</h1>
+    <p>Nobre Lar — acesso restrito</p>
+    <input id="cUser" placeholder="usuário" autocomplete="username" />
+    <input id="cPass" type="password" placeholder="senha" autocomplete="current-password" />
+    <button id="cBtn">Entrar</button>
+    <div class="err" id="cErr"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand"><span class="mark">NL</span><span class="titles"><span class="sub">Nobre Lar</span><span class="main">Painel de Cobrança</span></span></div>
+      <div class="tabs">
+        <button class="tab-btn active" id="tabCobranca" type="button">Cobrança</button>
+        <button class="tab-btn" id="tabSangrias" type="button">Sangrias</button>
+      </div>
+      <div class="top-right">
+        <span id="syncStatus"><span class="dot" id="syncDot"></span><span id="syncText">carregando…</span></span>
+        <span id="hiperSyncText" class="hiper-sync" title="Data/hora em que os dados foram puxados do Hiper pela última vez (não é a mesma coisa que 'tela atualizada')"></span>
+        <button class="btn ghost" id="refreshBtn" title="Recarrega a tela com os dados que já estão salvos — não busca nada novo no Hiper">↻ Atualizar tela</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="viewCobranca">
+      <div class="filters" id="filters" style="display:none;">
+        <select id="fAno"></select>
+        <select id="fMes">
+          <option value="">Todos os meses</option>
+        </select>
+        <select id="fVendedor">
+          <option value="">Todos os vendedores</option>
+        </select>
+        <input type="search" id="fBusca" placeholder="Buscar cliente…" />
+        <button class="chip" id="chipSemContato">Sem contato há 7+ dias</button>
+        <span class="grupo-sep" style="color:var(--muted,#888);font-size:12px;margin-left:8px;">Grupo:</span>
+        <button class="chip chip-grupo" data-grupo="jvm" type="button">JVM <span class="grupo-val"></span></button>
+        <button class="chip chip-grupo" data-grupo="krm" type="button">KRM <span class="grupo-val"></span></button>
+        <button class="chip chip-grupo" data-grupo="rm" type="button">RM <span class="grupo-val"></span></button>
+        <button class="chip chip-grupo" data-grupo="alianca" type="button">Aliança <span class="grupo-val"></span></button>
+        <button class="chip" id="chipGrupoLimpar" type="button" style="display:none;">Limpar grupos</button>
+      </div>
+
+      <div class="kpis" id="kpis" style="display:none;"></div>
+
+      <div class="section" id="chartSection" style="display:none;">
+        <h2>Contas a receber x recebido por mês <span class="count" id="chartAnoLabel"></span></h2>
+        <div id="graficoMensal" class="chart-wrap"></div>
+      </div>
+
+      <div class="section" id="listSection" style="display:none;">
+        <h2>Clientes com saldo em aberto <span class="count" id="listCount"></span></h2>
+        <div id="clientList"></div>
+      </div>
+
+      <div id="emptyState" class="empty" style="display:none;">Nenhum cliente encontrado para esse filtro.</div>
+    </div>
+
+    <div id="viewSangrias" style="display:none;">
+      <div class="filters" id="filtersSangrias">
+        <input type="date" id="sgDe" title="De" />
+        <input type="date" id="sgAte" title="Até" />
+        <select id="sgLoja">
+          <option value="">Todas as lojas</option>
+        </select>
+        <select id="sgOperador">
+          <option value="">Todos os responsáveis</option>
+        </select>
+        <select id="sgCat">
+          <option value="">Cofre + despesas + baixas + revisar</option>
+          <option value="cofre">Só cofre</option>
+          <option value="despesa">Só despesas</option>
+          <option value="baixa_credito">Só baixas de crediário</option>
+          <option value="revisar">Só a revisar</option>
+          <option value="suprimento">Só suprimentos (abertura de caixa)</option>
+        </select>
+        <input type="search" id="sgBusca" placeholder="Buscar pessoa, operador ou motivo…" />
+      </div>
+
+      <div class="kpis" id="sgLojaKpis" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 12px;"></div>
+
+      <div class="kpis" id="sgKpis" style="grid-template-columns: repeat(4, 1fr);"></div>
+
+      <div class="section" id="sgRevisarSection" style="display:none;border-color:var(--warn);">
+        <h2>⚠️ A revisar — motivo não reconhecido <span class="count" id="sgRevisarCount"></span></h2>
+        <div class="sangria-head">
+          <span>Data</span><span>Loja</span><span>Operação</span><span>Motivo</span><span style="text-align:right;">Valor</span><span>Operador</span>
+        </div>
+        <div id="sgRevisarList"></div>
+      </div>
+
+      <div class="section" id="sgCofreSection">
+        <h2>Cofre — por pessoa <span class="count" id="sgCofreCount"></span></h2>
+        <div id="sgCofreList"></div>
+      </div>
+
+      <div class="section" id="sgDespesaSection">
+        <h2>Despesas a lançar — por categoria <span class="count" id="sgDespesaCount"></span></h2>
+        <div id="sgDespesaList"></div>
+      </div>
+
+      <div class="section" id="sgBaixaSection">
+        <h2>Baixas de crediário (dinheiro) <span class="count" id="sgBaixaCount"></span></h2>
+        <div class="sangria-head">
+          <span>Data</span><span>Loja</span><span>Operação</span><span>Motivo</span><span style="text-align:right;">Valor</span><span>Operador</span>
+        </div>
+        <div id="sgBaixaList"></div>
+      </div>
+
+      <div class="section" id="sgSuprimentoSection" style="display:none;">
+        <h2>Suprimentos (abertura de caixa) <span class="count" id="sgSuprimentoCount"></span></h2>
+        <div class="sangria-head">
+          <span>Data</span><span>Loja</span><span>Operação</span><span>Motivo</span><span style="text-align:right;">Valor</span><span>Operador</span>
+        </div>
+        <div id="sgSuprimentoList"></div>
+      </div>
+
+      <div id="sgEmptyState" class="empty" style="display:none;">Nenhum lançamento encontrado para esse filtro.</div>
+      <div id="sgLoadErr" class="empty" style="display:none;color:var(--danger);"></div>
+    </div>
+  </main>
+</div>
+
+<div id="loadErr" style="display:none;"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- config ----
+  var API_URL = "https://nobrelar-cobranca-api.nobrelar.workers.dev";
+  var API_KEY = "p-GzGktsuVJlQigwwDZFAcboq0sNPI8z";
+  var CORTINA_USUARIO = "nobrelar";
+  var CORTINA_SENHA = "homecenter";
+  var PIX_CHAVE = "11.084.977/0001-50";
+  var PIX_BENEFICIARIO = "Nobre Lar";
+  var CLIENTES_EXCLUIR_MANUAL = ["KEOMA RESENDE MOTA", "KEYNES RESENDE MOTA", "FAZENDA PEDRA SOBRE PEDRA PALMARES", "JOSE VAGNO MOTA / DESPESAS CASAS PALMARES", "KEYNES MOTA SOCIEDADE INDIVIDUAL DE ADVOCACIA", "NOBRE LAR OBRA APARTAMENTO KEYNES", "NOBRE LAR ENG. KEYNES MOTA"];
+
+  // ---- curtain (not real security, see cobranca-semanal SKILL.md) ----
+  var curtain = document.getElementById("curtain");
+  var app = document.getElementById("app");
+  function tryLogin() {
+    var u = document.getElementById("cUser").value.trim();
+    var p = document.getElementById("cPass").value;
+    if (u === CORTINA_USUARIO && p === CORTINA_SENHA) {
+      curtain.style.display = "none";
+      app.style.display = "block";
+      init();
+    } else {
+      document.getElementById("cErr").textContent = "Usuário ou senha incorretos.";
+    }
+  }
+  document.getElementById("cBtn").addEventListener("click", tryLogin);
+  document.getElementById("cPass").addEventListener("keydown", function (e) { if (e.key === "Enter") tryLogin(); });
+
+  // ---- state ----
+  var STATE = { titulos: [], tratativas: [], filtro: { ano: null, mes: "", vendedor: "", busca: "", statusSel: "todos", excluirJvm: false, semContato: false, acaoJustica: false, grupos: [] }, openClient: null };
+  var SG_STATE = { sangrias: [], loaded: false, filtro: { de: "", ate: "", loja: "", operador: "", cat: "", busca: "" } };
+  var SG_LIMIAR_ATENCAO = 1000; // valor a partir do qual um lançamento é destacado no painel
+
+  function fmtMoeda(v) {
+    return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+  // Inverso de fmtMoeda — "R$ 1.234,56" -> 1234.56. Usado só pra atualizar um KPI na tela
+  // sem precisar re-renderizar tudo (ver salvarTratativa).
+  function parseMoeda(s) {
+    var n = String(s || "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    return parseFloat(n) || 0;
+  }
+  function fmtData(iso) {
+    if (!iso) return "—";
+    var d = iso.slice(0, 10).split("-");
+    return d[2] + "/" + d[1] + "/" + d[0];
+  }
+  function hojeISO() {
+    var d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+  function diasAtraso(dataVenc) {
+    if (!dataVenc) return 0;
+    var hoje = new Date(hojeISO() + "T00:00:00");
+    var dv = new Date(dataVenc.slice(0, 10) + "T00:00:00");
+    return Math.round((hoje - dv) / 86400000);
+  }
+
+  // Fila prioritária = vencidos entre 1 e 90 dias. Acima de 90 dias vira decisão de
+  // renegociar/negativar/dar baixa (não é mais "ligar amanhã"), então fica de fora daqui
+  // de propósito — ver conversa sobre a carteira em 2026-08-26.
+  function isPrioridade(t) {
+    if (!t.vencida) return false;
+    var d = diasAtraso(t.data_vencimento);
+    return d >= 1 && d <= 90;
+  }
+
+  function ultimaTratativaData(cliente) {
+    var maisRecente = null;
+    STATE.tratativas.forEach(function (t) {
+      if (t.cliente.toUpperCase() !== cliente.toUpperCase()) return;
+      if (!maisRecente || t.created_at > maisRecente) maisRecente = t.created_at;
+    });
+    return maisRecente;
+  }
+
+  function diasSemContato(cliente) {
+    var d = ultimaTratativaData(cliente);
+    if (!d) return Infinity;
+    return Math.floor((Date.now() - parseSqliteUTC(d).getTime()) / 86400000);
+  }
+
+  // Última tratativa de status "Promessa de pagamento" com data_promessa já vencida —
+  // sinal de que o cliente prometeu pagar até uma data e não pagou (título ainda aberto).
+  function promessaVencida(cliente) {
+    var ultima = null;
+    STATE.tratativas.forEach(function (t) {
+      if (t.cliente.toUpperCase() !== cliente.toUpperCase()) return;
+      if (t.status !== "Promessa de pagamento" || !t.data_promessa) return;
+      if (!ultima || t.created_at > ultima.created_at) ultima = t;
+    });
+    if (ultima && ultima.data_promessa < hojeISO()) return ultima;
+    return null;
+  }
+
+  function temAcaoNaJustica(cliente) {
+    return STATE.tratativas.some(function (t) {
+      return t.cliente.toUpperCase() === cliente.toUpperCase() && t.status === "Ação na Justiça";
+    });
+  }
+
+  function ehRazaoSocial(cliente) {
+    var sufixos = /\b(LTDA|EIRELI|S\/A|SA|ME|EPP|CIA|COMERCIO|COMÉRCIO|INDUSTRIA|INDÚSTRIA|CONSTRU|ENGENHARIA|PARTICIPA|DISTRIBUI|SERVICOS|SERVIÇOS|VAREJO|ATACAD|ASSESSORIA|CONSULTORIA|TRANSPORTES|MATERIAIS|HOLDING)\b/i;
+    var primeira = cliente.trim().split(/\s+/)[0];
+    return sufixos.test(cliente) || primeira.length <= 3;
+  }
+
+  function waLink(telefone, cliente, saldo, docs) {
+    if (!telefone) return null;
+    var digits = telefone.replace(/\D/g, "");
+    if (digits.length <= 11) digits = "55" + digits;
+    docs = (docs || []).slice().sort(function (a, b) { return (a.data_vencimento || "").localeCompare(b.data_vencimento || ""); });
+    var maxAtraso = docs.reduce(function (m, d) { return Math.max(m, diasAtraso(d.data_vencimento)); }, 0);
+    var inadimplente30 = maxAtraso > 30;
+
+    var listaNotas = docs.map(function (d) {
+      return "• " + (d.numero || d.descricao || "Documento") + " · venc. " + fmtData(d.data_vencimento) + " · " + fmtMoeda(d.saldo);
+    }).join("\n");
+
+    var abertura = ehRazaoSocial(cliente)
+      ? "Olá! Aqui é da Nobre Lar.\n\nEstamos entrando em contato porque consta em nosso sistema, em nome de " + cliente + ", um saldo em aberto de *" + fmtMoeda(saldo) + "*, referente às seguintes notas:\n\n"
+      : "Olá, " + tituloCase(cliente.split(" ")[0]) + ", tudo bem? Aqui é da Nobre Lar.\n\nEstamos entrando em contato porque consta em nosso sistema um saldo em aberto de *" + fmtMoeda(saldo) + "* em seu nome, referente às seguintes notas:\n\n";
+
+    var msg = abertura +
+      listaNotas + "\n\n" +
+      "Para regularizar, você pode efetuar o pagamento via PIX:\n" +
+      "Chave PIX: " + PIX_CHAVE + " (" + PIX_BENEFICIARIO + ")\n\n" +
+      "Se o pagamento já foi realizado, por favor desconsidere esta mensagem." +
+      (inadimplente30
+        ? " Caso precise negociar prazos ou condições de pagamento, é só nos responder por aqui. Estamos à disposição para ajudar."
+        : " Qualquer dúvida, estamos à disposição.");
+    return "https://wa.me/" + digits + "?text=" + encodeURIComponent(msg);
+  }
+  function tituloCase(s) {
+    return String(s).toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); });
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ "X-Api-Key": API_KEY }, opts.headers || {});
+    var res = await fetch(API_URL + path, opts);
+    if (!res.ok) throw new Error("API " + res.status + " em " + path);
+    return res.json();
+  }
+
+  function parseSqliteUTC(s) {
+    if (!s) return null;
+    return new Date(s.replace(" ", "T") + "Z");
+  }
+
+  function fmtDataHora(d) {
+    return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  async function carregarDados() {
+    var dot = document.getElementById("syncDot");
+    var text = document.getElementById("syncText");
+    var hiperEl = document.getElementById("hiperSyncText");
+    try {
+      var data = await api("/api/dashboard-data");
+      STATE.titulos = data.titulos_raw || [];
+      STATE.tratativas = data.tratativas || [];
+      dot.className = "dot ok";
+      var d = new Date(data.generated_at);
+      text.textContent = "tela carregada " + fmtDataHora(d);
+
+      var hiperD = parseSqliteUTC(data.hiper_sync_titulos);
+      if (hiperD) {
+        var horasAtras = (Date.now() - hiperD.getTime()) / 3600000;
+        hiperEl.textContent = "🔄 Hiper sincronizado em " + fmtDataHora(hiperD);
+        hiperEl.classList.toggle("stale", horasAtras > 20);
+      } else {
+        hiperEl.textContent = "Hiper: nunca sincronizado";
+        hiperEl.classList.add("stale");
+      }
+
+      montarFiltroAno();
+      render();
+    } catch (err) {
+      dot.className = "dot bad";
+      text.textContent = "falha ao carregar";
+      document.getElementById("loadErr").style.display = "block";
+      document.getElementById("loadErr").textContent = "Não foi possível carregar os dados: " + err.message;
+    }
+  }
+
+  var primeiroCarregamento = true;
+
+  function montarFiltroAno() {
+    var anoAnterior = STATE.filtro.ano, mesAnterior = STATE.filtro.mes, vendedorAnterior = STATE.filtro.vendedor;
+
+    var anos = new Set();
+    STATE.titulos.forEach(function (t) { if (t.data_vencimento) anos.add(t.data_vencimento.slice(0, 4)); });
+    var lista = Array.from(anos).sort().reverse();
+    var sel = document.getElementById("fAno");
+    sel.innerHTML = "";
+    var optTodos = document.createElement("option");
+    optTodos.value = ""; optTodos.textContent = "Todos os anos";
+    sel.appendChild(optTodos);
+    lista.forEach(function (a) {
+      var o = document.createElement("option");
+      o.value = a; o.textContent = a;
+      sel.appendChild(o);
+    });
+    if (!primeiroCarregamento && lista.indexOf(anoAnterior) !== -1) {
+      sel.value = anoAnterior;
+    } else if (lista.length) {
+      sel.value = lista[0];
+    }
+    STATE.filtro.ano = sel.value;
+
+    var mesSel = document.getElementById("fMes");
+    mesSel.innerHTML = '<option value="">Todos os meses</option>';
+    var nomesMes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+    nomesMes.forEach(function (nome, i) {
+      var o = document.createElement("option");
+      o.value = String(i + 1).padStart(2, "0");
+      o.textContent = nome;
+      mesSel.appendChild(o);
+    });
+    mesSel.value = mesAnterior || "";
+    STATE.filtro.mes = mesSel.value;
+
+    var vendedores = new Set();
+    STATE.titulos.forEach(function (t) {
+      if (!t.vendedor) return;
+      String(t.vendedor).split(/[,/]/).forEach(function (v) {
+        v = v.trim();
+        if (v) vendedores.add(v);
+      });
+    });
+    var vendSel = document.getElementById("fVendedor");
+    vendSel.innerHTML = '<option value="">Todos os vendedores</option>';
+    Array.from(vendedores).sort().forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      vendSel.appendChild(o);
+    });
+    vendSel.value = vendedores.has(vendedorAnterior) ? vendedorAnterior : "";
+    STATE.filtro.vendedor = vendSel.value;
+
+    document.getElementById("filters").style.display = "flex";
+    document.getElementById("kpis").style.display = "grid";
+    document.getElementById("listSection").style.display = "block";
+    primeiroCarregamento = false;
+  }
+
+  function isVencendo7(t) {
+    if (!t.data_vencimento) return false;
+    var hoje = new Date(hojeISO() + "T00:00:00");
+    var em7 = new Date(hoje.getTime() + 7 * 86400000);
+    var dv = new Date(t.data_vencimento.slice(0, 10) + "T00:00:00");
+    return dv >= hoje && dv <= em7;
+  }
+  function isVenceHoje(t) {
+    return !!t.data_vencimento && t.data_vencimento.slice(0, 10) === hojeISO();
+  }
+  function isVenceAmanha(t) {
+    if (!t.data_vencimento) return false;
+    var amanha = new Date(new Date(hojeISO() + "T00:00:00").getTime() + 86400000);
+    return t.data_vencimento.slice(0, 10) === amanha.toISOString().slice(0, 10);
+  }
+
+  function vendedoresDoTitulo(t) {
+    if (!t.vendedor) return [];
+    return String(t.vendedor).split(/[,/]/).map(function (v) { return v.trim(); }).filter(Boolean);
+  }
+
+  var GRUPOS_CLIENTE = {
+    jvm: function (n) { return /^JVM\b/i.test(n); },
+    krm: function (n) { return /^KRM\b/i.test(n); },
+    rm: function (n) { return /^RM\b/i.test(n); },
+    alianca: function (n) { return /ALIAN[CÇ]A/i.test(n); }
+  };
+
+  function clienteEmGrupos(nome, grupos) {
+    var n = String(nome || "").trim();
+    return grupos.some(function (g) { return GRUPOS_CLIENTE[g](n); });
+  }
+
+  function titulosBaseFiltrados() {
+    var f = STATE.filtro;
+    return STATE.titulos.filter(function (t) {
+      if (t.estornada) return false;
+      if (f.ano && (!t.data_vencimento || t.data_vencimento.slice(0, 4) !== f.ano)) return false;
+      if (f.mes && (!t.data_vencimento || t.data_vencimento.slice(5, 7) !== f.mes)) return false;
+      if (f.busca && t.cliente.toUpperCase().indexOf(f.busca.toUpperCase()) === -1) return false;
+      if (f.excluirJvm && (/^(RM|KRM|JVM)\b/i.test(t.cliente) || CLIENTES_EXCLUIR_MANUAL.indexOf(t.cliente.toUpperCase().trim()) !== -1)) return false;
+      // Mesmo comportamento do "Excluir RM/KRM/JVM": por padrão os clientes com ação na
+      // justiça aparecem normal nos totais, e só ficam escondidos quando o chip é ligado.
+      if (f.acaoJustica && temAcaoNaJustica(t.cliente)) return false;
+      if (f.grupos.length && !clienteEmGrupos(t.cliente, f.grupos)) return false;
+      if (f.vendedor && vendedoresDoTitulo(t).indexOf(f.vendedor) === -1) return false;
+      return true;
+    });
+  }
+
+  function titulosFiltrados() {
+    var f = STATE.filtro;
+    return titulosBaseFiltrados().filter(function (t) {
+      if (f.statusSel === "vencido" && !t.vencida) return false;
+      if (f.statusSel === "vencendo7" && !isVencendo7(t)) return false;
+      if (f.statusSel === "hoje" && !isVenceHoje(t)) return false;
+      if (f.statusSel === "amanha" && !isVenceAmanha(t)) return false;
+      if ((f.statusSel === "recuperado" || f.statusSel === "recuperadoParcial") && !(t.quitada || (t.valor_total - t.saldo) > 0)) return false;
+      if (f.statusSel === "prioridade" && !isPrioridade(t)) return false;
+      // "promessaAtrasada" é um filtro por cliente (ver render()), não por título — não
+      // filtra nada aqui, só evita cair nos outros ramos acima.
+      return true;
+    });
+  }
+
+  // Juros = o que o Hiper somou ao principal (valor_total - valor_original, juros/multa
+  // automáticos). Nunca passa do saldo; título sem valor_original conta como sem juros.
+  function jurosDe(t) {
+    if (t.valor_original == null) return 0;
+    var j = t.valor_total - t.valor_original;
+    if (!(j > 0)) return 0;
+    return Math.min(j, t.saldo);
+  }
+
+  function agruparPorCliente(titulos, modoRecuperado) {
+    var map = new Map();
+    titulos.forEach(function (t) {
+      var pago = t.valor_total - t.saldo;
+      var incluir = modoRecuperado ? (t.quitada || pago > 0) : !!t.aberta;
+      if (!incluir) return;
+      var key = t.cliente;
+      if (!map.has(key)) map.set(key, { cliente: key, telefone: t.telefone, vendedor: t.vendedor, saldo: 0, original: 0, juros: 0, vencido: 0, docs: [], recuperado: !!modoRecuperado, parcial: false });
+      var g = map.get(key);
+      var valor = modoRecuperado ? pago : t.saldo;
+      g.saldo += valor;
+      g.original += (t.valor_original != null ? t.valor_original : t.valor_total);
+      if (!modoRecuperado) g.juros += jurosDe(t);
+      if (!modoRecuperado && t.vencida) g.vencido += t.saldo;
+      if (modoRecuperado && t.aberta) g.parcial = true;
+      g.docs.push(t);
+    });
+    return Array.from(map.values()).sort(function (a, b) { return b.saldo - a.saldo; });
+  }
+
+  function render() {
+    var filtrados = titulosFiltrados();
+    var modoRecuperado = STATE.filtro.statusSel === "recuperado" || STATE.filtro.statusSel === "recuperadoParcial";
+    var grupos = agruparPorCliente(filtrados, modoRecuperado);
+    if (STATE.filtro.statusSel === "recuperadoParcial") {
+      grupos = grupos.filter(function (g) { return g.parcial; });
+    }
+    if (STATE.filtro.statusSel === "promessaAtrasada") {
+      grupos = grupos.filter(function (g) { return !!promessaVencida(g.cliente); });
+    }
+    if (STATE.filtro.semContato) {
+      grupos = grupos.filter(function (g) { return diasSemContato(g.cliente) > 7; });
+    }
+
+    // (filtro de "Ação na Justiça" já é aplicado na base, em titulosBaseFiltrados)
+    // Fila prioritária (1-90 dias) e promessas vencidas: sempre calculados a partir da base
+    // (ano/mes/vendedor/busca/JVM), independente de qual chip de status está selecionado —
+    // são KPIs de acompanhamento fixos, não devem sumir quando outro chip é clicado.
+    var base = titulosBaseFiltrados();
+    var totalPrioridade = 0;
+    var clientesPrioridade = new Set();
+    base.forEach(function (t) {
+      if (t.aberta && isPrioridade(t)) { totalPrioridade += t.saldo; clientesPrioridade.add(t.cliente); }
+    });
+
+    var gruposAbertos = agruparPorCliente(base, false);
+    var totalPromessaAtrasada = 0;
+    var clientesPromessaAtrasada = 0;
+    gruposAbertos.forEach(function (g) {
+      if (promessaVencida(g.cliente)) { totalPromessaAtrasada += g.saldo; clientesPromessaAtrasada++; }
+    });
+
+    // KPIs
+    var totalAberto = 0, totalJurosAberto = 0, totalVencido = 0, vencendo7 = 0, venceHoje = 0, venceAmanha = 0, totalRecuperado = 0;
+    var totalRecuperadoParcial = 0;
+    var clientesRecuperadoParcial = new Set();
+    filtrados.forEach(function (t) {
+      if (t.aberta) {
+        totalAberto += t.saldo;
+        totalJurosAberto += jurosDe(t);
+        if (t.vencida) totalVencido += t.saldo;
+        if (isVencendo7(t)) vencendo7 += t.saldo;
+        if (isVenceHoje(t)) venceHoje += t.saldo;
+        if (isVenceAmanha(t)) venceAmanha += t.saldo;
+      }
+      // Conta tanto quitação total quanto baixa parcial (valor_quitado > 0 com saldo
+      // ainda em aberto) — tudo que já foi efetivamente recebido do título.
+      var pago = t.valor_total - t.saldo;
+      if (pago > 0) totalRecuperado += pago;
+      // "Recuperado parcial" é só a fatia de pago que ainda está com o título em aberto
+      // (não incluiu quitação total) — mostrado à parte pra deixar claro quanto já entrou
+      // de clientes que ainda devem o resto.
+      if (pago > 0 && !t.quitada) {
+        totalRecuperadoParcial += pago;
+        clientesRecuperadoParcial.add(t.cliente);
+      }
+    });
+    // Recebimentos parciais registrados manualmente (cliente pagou, mas o Hiper ainda não
+    // refletiu) também contam como recuperado, respeitando o filtro de ano igual aos títulos.
+    // Só soma enquanto reconciliado = 0 — assim que a cobradora confirma que o Hiper já
+    // baixou o título (botão no histórico), esse valor para de contar aqui pra não duplicar
+    // com o que titulos.quitada/saldo já contabiliza sozinho.
+    STATE.tratativas.forEach(function (t) {
+      if (t.status !== "Recebimento parcial" || !t.valor_recebido || t.reconciliado) return;
+      if (STATE.filtro.ano && t.data.slice(0, 4) !== STATE.filtro.ano) return;
+      totalRecuperado += Number(t.valor_recebido);
+      totalRecuperadoParcial += Number(t.valor_recebido);
+      clientesRecuperadoParcial.add(t.cliente);
+    });
+    var clientesComDivida = modoRecuperado ? new Set(STATE.titulos.filter(function (t) { return t.aberta; }).map(function (t) { return t.cliente; })).size : grupos.length;
+
+    // Dívida do grupo RM/KRM/JVM/exclusão manual — calculada à parte (independente do chip
+    // estar ligado ou não), respeitando ano/mês/vendedor/busca, mas sempre fora de quem já
+    // está em "Ação na Justiça" (grupo próprio, ver titulosBaseFiltrados).
+    var totalExcluidoJvm = 0;
+    var clientesExcluidoJvm = new Set();
+    STATE.titulos.forEach(function (t) {
+      if (t.estornada || !t.aberta) return;
+      var f = STATE.filtro;
+      if (f.ano && (!t.data_vencimento || t.data_vencimento.slice(0, 4) !== f.ano)) return;
+      if (f.mes && (!t.data_vencimento || t.data_vencimento.slice(5, 7) !== f.mes)) return;
+      if (f.busca && t.cliente.toUpperCase().indexOf(f.busca.toUpperCase()) === -1) return;
+      if (f.vendedor && vendedoresDoTitulo(t).indexOf(f.vendedor) === -1) return;
+      if (temAcaoNaJustica(t.cliente)) return;
+      var isExcluido = /^(RM|KRM|JVM)\b/i.test(t.cliente) || CLIENTES_EXCLUIR_MANUAL.indexOf(t.cliente.toUpperCase().trim()) !== -1;
+      if (!isExcluido) return;
+      totalExcluidoJvm += t.saldo;
+      clientesExcluidoJvm.add(t.cliente);
+    });
+
+    // Saldo em aberto por grupo (JVM/KRM/RM/Aliança) para os botões de seleção — respeita
+    // ano/mês/vendedor/busca; um cliente pode contar em mais de um grupo (ex.: RM ALIANCA).
+    var totaisGrupo = { jvm: 0, krm: 0, rm: 0, alianca: 0 };
+    STATE.titulos.forEach(function (t) {
+      if (t.estornada || !t.aberta) return;
+      var f = STATE.filtro;
+      if (f.ano && (!t.data_vencimento || t.data_vencimento.slice(0, 4) !== f.ano)) return;
+      if (f.mes && (!t.data_vencimento || t.data_vencimento.slice(5, 7) !== f.mes)) return;
+      if (f.busca && t.cliente.toUpperCase().indexOf(f.busca.toUpperCase()) === -1) return;
+      if (f.vendedor && vendedoresDoTitulo(t).indexOf(f.vendedor) === -1) return;
+      Object.keys(GRUPOS_CLIENTE).forEach(function (g) {
+        if (GRUPOS_CLIENTE[g](String(t.cliente || "").trim())) totaisGrupo[g] += t.saldo;
+      });
+    });
+    document.querySelectorAll(".chip-grupo").forEach(function (b) {
+      var g = b.getAttribute("data-grupo");
+      b.classList.toggle("active", STATE.filtro.grupos.indexOf(g) !== -1);
+      b.querySelector(".grupo-val").textContent = "· " + fmtMoeda(totaisGrupo[g]);
+    });
+    document.getElementById("chipGrupoLimpar").style.display = STATE.filtro.grupos.length ? "" : "none";
+
+    // Dívida do grupo "Ação na Justiça" — mesmo princípio: calculada à parte, sempre visível,
+    // independente do chip estar ligado, respeitando ano/mês/vendedor/busca.
+    var totalAcaoJustica = 0;
+    var clientesAcaoJustica = new Set();
+    STATE.titulos.forEach(function (t) {
+      if (t.estornada || !t.aberta) return;
+      var f = STATE.filtro;
+      if (f.ano && (!t.data_vencimento || t.data_vencimento.slice(0, 4) !== f.ano)) return;
+      if (f.mes && (!t.data_vencimento || t.data_vencimento.slice(5, 7) !== f.mes)) return;
+      if (f.busca && t.cliente.toUpperCase().indexOf(f.busca.toUpperCase()) === -1) return;
+      if (f.vendedor && vendedoresDoTitulo(t).indexOf(f.vendedor) === -1) return;
+      if (!temAcaoNaJustica(t.cliente)) return;
+      totalAcaoJustica += t.saldo;
+      clientesAcaoJustica.add(t.cliente);
+    });
+
+    var sel = STATE.filtro.statusSel;
+    document.getElementById("kpis").innerHTML =
+      kpiCard("todos", "Total em aberto", fmtMoeda(totalAberto), (modoRecuperado ? "" : grupos.length + " clientes"), "", sel === "todos") +
+      kpiCardPlain("Valor real (principal)", fmtMoeda(totalAberto - totalJurosAberto), totalAberto ? Math.round((totalAberto - totalJurosAberto) / totalAberto * 100) + "% do total em aberto" : "—", "ok") +
+      kpiCardPlain("Juros acumulados", fmtMoeda(totalJurosAberto), totalAberto ? Math.round(totalJurosAberto / totalAberto * 100) + "% do total em aberto" : "—", "warn") +
+      kpiCard("vencido", "Vencido", fmtMoeda(totalVencido), totalAberto ? Math.round(totalVencido / totalAberto * 100) + "% do total" : "—", "danger", sel === "vencido") +
+      kpiCard("hoje", "Vence hoje", fmtMoeda(venceHoje), "", "danger", sel === "hoje") +
+      kpiCard("amanha", "Vence amanhã", fmtMoeda(venceAmanha), "", "warn", sel === "amanha") +
+      kpiCard("vencendo7", "Vencendo em 7 dias", fmtMoeda(vencendo7), "", "warn", sel === "vencendo7") +
+      kpiCard("prioridade", "Fila prioritária (1-90d)", fmtMoeda(totalPrioridade), clientesPrioridade.size + " clientes — cobrar amanhã", "warn", sel === "prioridade") +
+      kpiCard("promessaAtrasada", "Promessas vencidas", fmtMoeda(totalPromessaAtrasada), clientesPromessaAtrasada + " clientes não cumpriram", "danger", sel === "promessaAtrasada") +
+      kpiCard("recuperado", "Total recuperado", fmtMoeda(totalRecuperado), (modoRecuperado && sel === "recuperado" ? grupos.length + " clientes" : ""), "ok", sel === "recuperado") +
+      kpiCard("recuperadoParcial", "Total recuperado parcial", fmtMoeda(totalRecuperadoParcial), (sel === "recuperadoParcial" ? grupos.length + " clientes" : clientesRecuperadoParcial.size + " clientes"), "ok2", sel === "recuperadoParcial") +
+      kpiCard("todos", "Clientes com dívida", String(clientesComDivida), "", "", sel === "todos") +
+      kpiCard("excluirJvm", "Excluir RM/KRM/JVM*", fmtMoeda(totalExcluidoJvm), clientesExcluidoJvm.size + " clientes", "info", STATE.filtro.excluirJvm) +
+      kpiCard("acaoJustica", "Ação na Justiça", fmtMoeda(totalAcaoJustica), clientesAcaoJustica.size + " clientes", "danger", STATE.filtro.acaoJustica);
+
+    document.querySelectorAll(".kpi.clickable").forEach(function (el) {
+      el.addEventListener("click", function () {
+        var status = el.getAttribute("data-status");
+        if (status === "excluirJvm") {
+          STATE.filtro.excluirJvm = !STATE.filtro.excluirJvm;
+          if (STATE.filtro.excluirJvm) STATE.filtro.grupos = [];
+          render();
+          return;
+        }
+        if (status === "acaoJustica") {
+          STATE.filtro.acaoJustica = !STATE.filtro.acaoJustica;
+          render();
+          return;
+        }
+        STATE.filtro.statusSel = status;
+        render();
+      });
+    });
+
+    document.getElementById("listSection").querySelector("h2").firstChild.textContent =
+      modoRecuperado ? "Clientes com valores recuperados " : "Clientes com saldo em aberto ";
+    document.getElementById("listCount").textContent = grupos.length + (grupos.length === 1 ? " cliente" : " clientes");
+    document.getElementById("emptyState").style.display = grupos.length ? "none" : "block";
+    document.getElementById("clientList").innerHTML = grupos.map(renderClientRow).join("");
+
+    renderGraficoMensal();
+
+    grupos.forEach(function (g) {
+      var row = document.getElementById("row-" + slug(g.cliente));
+      var detail = document.getElementById("detail-" + slug(g.cliente));
+      if (!row) return;
+      row.addEventListener("click", function () {
+        var isOpen = detail.classList.contains("open");
+        document.querySelectorAll(".client-detail.open").forEach(function (el) { el.classList.remove("open"); });
+        document.querySelectorAll(".client-row.open").forEach(function (el) { el.classList.remove("open"); });
+        if (!isOpen) {
+          detail.classList.add("open");
+          row.classList.add("open");
+          preencherDetalhe(g);
+        }
+      });
+    });
+  }
+
+  function renderGraficoMensal() {
+    var f = STATE.filtro;
+    var relevantes = STATE.titulos.filter(function (t) {
+      if (t.estornada) return false;
+      if (f.ano && (!t.data_vencimento || t.data_vencimento.slice(0, 4) !== f.ano)) return false;
+      if (f.busca && t.cliente.toUpperCase().indexOf(f.busca.toUpperCase()) === -1) return false;
+      if (f.excluirJvm && (/^(RM|KRM|JVM)\b/i.test(t.cliente) || CLIENTES_EXCLUIR_MANUAL.indexOf(t.cliente.toUpperCase().trim()) !== -1)) return false;
+      if (f.acaoJustica && temAcaoNaJustica(t.cliente)) return false;
+      if (f.grupos.length && !clienteEmGrupos(t.cliente, f.grupos)) return false;
+      if (f.vendedor && vendedoresDoTitulo(t).indexOf(f.vendedor) === -1) return false;
+      return true;
+    });
+    var nomesMes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    var porMes = {};
+    for (var m = 1; m <= 12; m++) { porMes[String(m).padStart(2, "0")] = { faturado: 0, recebido: 0 }; }
+    relevantes.forEach(function (t) {
+      if (!t.data_vencimento) return;
+      var mes = t.data_vencimento.slice(5, 7);
+      if (!porMes[mes]) return;
+      porMes[mes].faturado += t.valor_total;
+      porMes[mes].recebido += (t.valor_total - t.saldo);
+    });
+    var maxVal = 0;
+    Object.keys(porMes).forEach(function (k) { maxVal = Math.max(maxVal, porMes[k].faturado, porMes[k].recebido); });
+
+    var mesChaves = Object.keys(porMes).sort();
+    var cols = mesChaves.map(function (k, i) {
+      var d = porMes[k];
+      var pctFat = maxVal ? (d.faturado / maxVal * 100) : 0;
+      var pctRec = maxVal ? (d.recebido / maxVal * 100) : 0;
+      var pctRecebido = d.faturado ? Math.round(d.recebido / d.faturado * 100) : null;
+      var selecionado = f.mes === k;
+      return '<div class="chart-col' + (selecionado ? " selected" : "") + '" data-mes="' + k + '" title="' + nomesMes[i] + ': faturado ' + fmtMoeda(d.faturado) + ', recebido ' + fmtMoeda(d.recebido) + ' — clique para filtrar">' +
+        '<div class="chart-pct">' + (pctRecebido === null ? "" : pctRecebido + "%") + '</div>' +
+        '<div class="chart-bars">' +
+          '<div class="chart-bar faturado" style="height:' + pctFat + '%"></div>' +
+          '<div class="chart-bar recebido" style="height:' + pctRec + '%"></div>' +
+        '</div>' +
+        '<div class="chart-mes">' + nomesMes[i] + '</div>' +
+      '</div>';
+    }).join("");
+
+    document.getElementById("graficoMensal").innerHTML =
+      '<div class="chart-row">' + cols + '</div>' +
+      '<div class="chart-legend"><span><span class="dot-legend faturado"></span>Faturado</span><span><span class="dot-legend recebido"></span>Recebido (% = recuperado do mês)</span></div>';
+    document.getElementById("chartAnoLabel").textContent = f.ano || "todos os anos";
+    document.getElementById("chartSection").style.display = "block";
+
+    document.querySelectorAll(".chart-col").forEach(function (col) {
+      col.addEventListener("click", function () {
+        var mesClicado = col.getAttribute("data-mes");
+        STATE.filtro.mes = STATE.filtro.mes === mesClicado ? "" : mesClicado;
+        document.getElementById("fMes").value = STATE.filtro.mes;
+        render();
+      });
+    });
+  }
+
+  function kpiCard(statusKey, label, value, sub, cls, selected) {
+    return '<button type="button" class="kpi clickable ' + (cls || "") + (selected ? " selected" : "") + '" data-status="' + statusKey + '">' +
+      '<div class="label">' + label + '</div><div class="value tabular">' + value + '</div>' +
+      (sub ? '<div class="sub">' + sub + '</div>' : "") + '</button>';
+  }
+
+  function slug(s) { return s.replace(/[^a-z0-9]/gi, "").toLowerCase(); }
+
+  function renderClientRow(g) {
+    var promessa = g.recuperado ? null : promessaVencida(g.cliente);
+    var badge = g.recuperado
+      ? (g.parcial ? '<span class="badge parcial">parcial</span>' : '<span class="badge recuperado">recuperado</span>')
+      : (promessa
+          ? '<span class="badge vencido">promessa quebrada (' + fmtData(promessa.data_promessa) + ')</span>'
+          : (g.vencido > 0
+              ? '<span class="badge vencido">' + fmtMoeda(g.vencido) + ' vencido</span>'
+              : '<span class="badge aberto">em dia</span>'));
+    var semContatoTxt = "";
+    if (!g.recuperado) {
+      var dias = diasSemContato(g.cliente);
+      if (dias === Infinity) semContatoTxt = " · nunca contatado";
+      else if (dias > 7) semContatoTxt = " · sem contato há " + dias + " dias";
+    }
+    return '<div class="client-row" id="row-' + slug(g.cliente) + '">' +
+      '<div><div class="client-name">' + g.cliente + '</div><div class="client-meta">' +
+        (g.vendedor ? "Vendedor: " + g.vendedor : "sem vendedor cadastrado") +
+        (g.telefone ? " · " + g.telefone : " · sem telefone") +
+        semContatoTxt +
+      '</div></div>' +
+      badge +
+      '<div class="client-saldo tabular">' +
+        (g.recuperado
+          ? '<div>' + fmtMoeda(g.saldo) + ' <span class="client-saldo-tag">recuperado</span></div>'
+          : '<div>' + fmtMoeda(g.saldo) + ' <span class="client-saldo-tag">total</span></div>' +
+            '<div class="client-saldo-original">' + fmtMoeda(g.saldo - g.juros) + ' <span class="client-saldo-tag">real</span> · ' +
+              '<span style="color:var(--warn);">' + fmtMoeda(g.juros) + ' <span class="client-saldo-tag">juros</span></span></div>') +
+      '</div>' +
+      '<div class="chev">▸</div>' +
+      '</div>' +
+      '<div class="client-detail" id="detail-' + slug(g.cliente) + '"></div>';
+  }
+
+  function preencherDetalhe(g) {
+    var el = document.getElementById("detail-" + slug(g.cliente));
+    var docsOrdenados = g.docs.slice().sort(function (a, b) { return (a.data_vencimento || "").localeCompare(b.data_vencimento || ""); });
+    var docsHtml;
+    if (g.recuperado) {
+      docsHtml = docsOrdenados.map(function (d) {
+        var valor = d.valor_total - d.saldo;
+        var restante = d.aberta && d.saldo > 0 ? ' <span style="color:var(--warn);">(falta ' + fmtMoeda(d.saldo) + ')</span>' : '';
+        return '<div class="doc-item"><span class="num">' + (d.numero || d.descricao || "—") + ' · venc. ' + fmtData(d.data_vencimento) + '</span><span class="tabular">' + fmtMoeda(valor) + restante + '</span></div>';
+      }).join("");
+    } else {
+      docsHtml = docsOrdenados.map(function (d) {
+        var juros = (d.valor_original != null) ? (d.valor_total - d.valor_original) : null;
+        var temJuros = juros != null && juros > 0.01;
+        return '<label class="doc-item-check">' +
+          '<input type="checkbox" class="doc-check" data-doc="' + d.id_documento + '"' + (d.vencida ? " checked" : "") + '>' +
+          '<span class="doc-info"><span class="doc-num">' + (d.numero || d.descricao || "—") + '</span>' +
+          '<span class="doc-sub">venc. ' + fmtData(d.data_vencimento) + (d.vencida ? " · vencido" : " · a vencer") + '</span>' +
+          (temJuros
+            ? '<span class="doc-juros">original ' + fmtMoeda(d.valor_original) + ' + juros ' + fmtMoeda(juros) + '</span>'
+            : "") +
+          '</span>' +
+          '<span class="tabular">' + fmtMoeda(d.saldo) + '</span></label>';
+      }).join("");
+    }
+
+    var hist = STATE.tratativas.filter(function (t) { return t.cliente.toUpperCase() === g.cliente.toUpperCase(); })
+      .sort(function (a, b) { return b.created_at.localeCompare(a.created_at); });
+    var histHtml = hist.length
+      ? hist.map(function (t) {
+          var vencidaTxt = (t.status === "Promessa de pagamento" && t.data_promessa)
+            ? (t.data_promessa < hojeISO() ? " · promessa quebrada" : " · promessa p/ " + fmtData(t.data_promessa))
+            : "";
+          var valorTxt = (t.status === "Recebimento parcial" && t.valor_recebido)
+            ? " · " + fmtMoeda(Number(t.valor_recebido)) + " recebido"
+            : "";
+          var reconciliarHtml = "";
+          if (t.status === "Recebimento parcial" && t.valor_recebido) {
+            reconciliarHtml = t.reconciliado
+              ? ' <span style="color:var(--ink-faint);">· já baixado no Hiper ✓</span>'
+              : ' <button type="button" class="btn ghost reconciliar-btn" data-id="' + t.id + '" style="font-size:11px;padding:2px 8px;margin-left:6px;">marcar como já baixado no Hiper</button>';
+          }
+          var editarHtml = ' <button type="button" class="btn ghost editar-trat-btn" data-id="' + t.id + '" style="font-size:11px;padding:2px 8px;margin-left:6px;">editar</button>';
+          return '<div class="tratativa-item" id="tratItem-' + t.id + '"><strong>' + (t.status || "—") + '</strong> — ' + escapeHtml(t.tratativa) +
+            '<div class="meta">' + fmtData(t.data) + (t.autor ? " · " + t.autor : "") + vencidaTxt + valorTxt + reconciliarHtml + editarHtml + '</div></div>';
+        }).join("")
+      : '<div class="tratativa-item" style="color:var(--ink-faint);">Nenhuma tratativa registrada ainda.</div>';
+
+    el.innerHTML =
+      '<div class="detail-grid">' +
+        '<div>' +
+          '<div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);margin-bottom:8px;">' +
+            (g.recuperado ? (g.parcial ? "Documentos com pagamento parcial" : "Documentos quitados") : "Documentos em aberto (marque as notas a cobrar)") +
+          '</div>' +
+          docsHtml +
+          (g.recuperado ? "" : '<div id="waArea-' + slug(g.cliente) + '" style="margin-top:12px;"></div>') +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);margin-bottom:8px;">Histórico de tratativas</div>' +
+          '<div style="max-height:180px;overflow-y:auto;margin-bottom:12px;">' + histHtml + '</div>' +
+          '<select id="novoStatus-' + slug(g.cliente) + '">' +
+            '<option value="Contato realizado">Contato realizado</option>' +
+            '<option value="Sem resposta">Sem resposta</option>' +
+            '<option value="Promessa de pagamento">Promessa de pagamento</option>' +
+            '<option value="Recebimento parcial">Recebimento parcial</option>' +
+            '<option value="Negociado boleto">Negociado boleto</option>' +
+            '<option value="Pagamento confirmado">Pagamento confirmado</option>' +
+            '<option value="Ação na Justiça">Ação na Justiça</option>' +
+          '</select>' +
+          '<input type="date" id="novaPromessa-' + slug(g.cliente) + '" style="display:none;margin-top:6px;" min="' + hojeISO() + '">' +
+          '<input type="number" step="0.01" min="0.01" id="novoValorRecebido-' + slug(g.cliente) + '" style="display:none;margin-top:6px;" placeholder="Valor recebido (R$)">' +
+          '<textarea id="novaTratativa-' + slug(g.cliente) + '" rows="2" placeholder="O que foi combinado/registrado…" style="margin-top:6px;"></textarea>' +
+          '<div class="btn-row">' +
+            '<button class="btn ghost" id="boletoBtn-' + slug(g.cliente) + '">📄 Negociado boleto</button>' +
+            '<button class="btn" id="salvarBtn-' + slug(g.cliente) + '">Registrar tratativa</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    document.getElementById("salvarBtn-" + slug(g.cliente)).addEventListener("click", function () {
+      salvarTratativa(g.cliente, "salvarBtn-" + slug(g.cliente), "Registrar tratativa");
+    });
+    document.getElementById("boletoBtn-" + slug(g.cliente)).addEventListener("click", function () {
+      salvarTratativa(g.cliente, "boletoBtn-" + slug(g.cliente), "📄 Negociado boleto", {
+        status: "Negociado boleto",
+        texto: "Cliente negociou pagamento via boleto.",
+      });
+    });
+    el.querySelectorAll(".reconciliar-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { marcarReconciliado(btn, g); });
+    });
+    el.querySelectorAll(".editar-trat-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { iniciarEdicaoTratativa(btn, g); });
+    });
+
+    var selStatusEl = document.getElementById("novoStatus-" + slug(g.cliente));
+    var promessaEl = document.getElementById("novaPromessa-" + slug(g.cliente));
+    var valorRecebidoEl = document.getElementById("novoValorRecebido-" + slug(g.cliente));
+    var atualizarCampoPromessa = function () {
+      promessaEl.style.display = selStatusEl.value === "Promessa de pagamento" ? "block" : "none";
+      valorRecebidoEl.style.display = selStatusEl.value === "Recebimento parcial" ? "block" : "none";
+    };
+    selStatusEl.addEventListener("change", atualizarCampoPromessa);
+    atualizarCampoPromessa();
+
+    if (!g.recuperado) {
+      var atualizarWa = function () {
+        var checks = el.querySelectorAll(".doc-check:checked");
+        var idsSelecionados = Array.from(checks).map(function (c) { return c.getAttribute("data-doc"); });
+        var docsSelecionados = g.docs.filter(function (d) { return idsSelecionados.indexOf(String(d.id_documento)) !== -1; });
+        var saldoSelecionado = docsSelecionados.reduce(function (s, d) { return s + d.saldo; }, 0);
+        var area = document.getElementById("waArea-" + slug(g.cliente));
+        if (!docsSelecionados.length) {
+          area.innerHTML = '<span style="font-size:12px;color:var(--ink-faint);">Marque ao menos uma nota para gerar a mensagem de cobrança.</span>';
+          return;
+        }
+        var wa = waLink(g.telefone, g.cliente, saldoSelecionado, docsSelecionados);
+        area.innerHTML = wa
+          ? '<a class="wa-btn" href="' + wa + '" target="_blank" rel="noopener">📱 Cobrar ' + docsSelecionados.length + (docsSelecionados.length === 1 ? " nota selecionada" : " notas selecionadas") + ' (' + fmtMoeda(saldoSelecionado) + ')</a>'
+          : '<span style="font-size:12px;color:var(--ink-faint);">Cliente sem telefone cadastrado.</span>';
+      };
+      el.querySelectorAll(".doc-check").forEach(function (chk) {
+        chk.addEventListener("change", atualizarWa);
+      });
+      atualizarWa();
+    }
+  }
+
+  async function salvarTratativa(cliente, btnId, btnLabel, forcado) {
+    var id = slug(cliente);
+    var status = forcado ? forcado.status : document.getElementById("novoStatus-" + id).value;
+    var texto = forcado ? forcado.texto : document.getElementById("novaTratativa-" + id).value.trim();
+    var btn = document.getElementById(btnId);
+    if (!texto) { document.getElementById("novaTratativa-" + id).focus(); return; }
+    var promessaEl = document.getElementById("novaPromessa-" + id);
+    var dataPromessa = (!forcado && status === "Promessa de pagamento" && promessaEl) ? promessaEl.value : null;
+    if (status === "Promessa de pagamento" && !dataPromessa) {
+      alert("Informe a data prometida de pagamento.");
+      if (promessaEl) promessaEl.focus();
+      return;
+    }
+    var valorRecebidoEl = document.getElementById("novoValorRecebido-" + id);
+    var valorRecebido = (!forcado && status === "Recebimento parcial" && valorRecebidoEl) ? valorRecebidoEl.value : null;
+    if (status === "Recebimento parcial" && (!valorRecebido || Number(valorRecebido) <= 0)) {
+      alert("Informe o valor recebido.");
+      if (valorRecebidoEl) valorRecebidoEl.focus();
+      return;
+    }
+    btn.disabled = true; btn.textContent = "Salvando…";
+    try {
+      await api("/api/tratativas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cliente: cliente, status: status, tratativa: texto, autor: CORTINA_USUARIO, data_promessa: dataPromessa || null, valor_recebido: valorRecebido || null }),
+      });
+      var fresh = await api("/api/tratativas");
+      STATE.tratativas = fresh.tratativas || [];
+      var g = agruparPorCliente(titulosFiltrados()).find(function (x) { return x.cliente === cliente; });
+      if (g) preencherDetalhe(g);
+      // Atualiza o KPI "Total recuperado" na hora, sem recarregar a tela inteira (o que
+      // fecharia o detalhe do cliente aberto) — só quando o recebimento cai no ano filtrado.
+      if (status === "Recebimento parcial" && valorRecebido) {
+        ajustarKpiRecuperado(Number(valorRecebido), null);
+      }
+      btn.textContent = "Registrado ✓";
+      setTimeout(function () { btn.disabled = false; btn.textContent = btnLabel; }, 1500);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = btnLabel;
+      alert("Erro ao salvar: " + err.message);
+    }
+  }
+
+  // delta > 0 soma, delta < 0 subtrai do KPI "Total recuperado" já na tela, sem
+  // re-renderizar tudo. dataDaTratativa (ISO) é usada pra respeitar o filtro de ano; passe
+  // null pra "hoje" (caso de registro novo, sempre no ano corrente).
+  function ajustarKpiRecuperado(delta, dataDaTratativa) {
+    var anoDoEvento = (dataDaTratativa || hojeISO()).slice(0, 4);
+    var dentroDoFiltro = !STATE.filtro.ano || anoDoEvento === STATE.filtro.ano;
+    if (!dentroDoFiltro) return;
+    // Recebimento parcial manual conta tanto em "Total recuperado" quanto na fatia
+    // "Total recuperado parcial" — ajusta os dois cards na tela sem re-renderizar tudo.
+    ["recuperado", "recuperadoParcial"].forEach(function (status) {
+      var kpiEl = document.querySelector('.kpi[data-status="' + status + '"] .value');
+      if (!kpiEl) return;
+      var atual = parseMoeda(kpiEl.textContent);
+      kpiEl.textContent = fmtMoeda(atual + delta);
+    });
+  }
+
+  async function marcarReconciliado(btn, g) {
+    var id = Number(btn.getAttribute("data-id"));
+    var t = STATE.tratativas.find(function (x) { return x.id === id; });
+    if (!t) return;
+    btn.disabled = true; btn.textContent = "Marcando…";
+    try {
+      await api("/api/tratativas/reconciliar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: id }),
+      });
+      t.reconciliado = 1;
+      ajustarKpiRecuperado(-Number(t.valor_recebido), t.data);
+      preencherDetalhe(g);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = "marcar como já baixado no Hiper";
+      alert("Erro ao marcar: " + err.message);
+    }
+  }
+
+  // Troca um item do histórico por um formulário inline (texto + data de promessa/valor
+  // recebido quando fizer sentido pro status) pra corrigir erro de digitação sem apagar e
+  // recriar a tratativa (o que perderia a data/autor originais).
+  function iniciarEdicaoTratativa(btn, g) {
+    var id = Number(btn.getAttribute("data-id"));
+    var t = STATE.tratativas.find(function (x) { return x.id === id; });
+    if (!t) return;
+    var item = document.getElementById("tratItem-" + id);
+    if (!item) return;
+    var promessaField = (t.status === "Promessa de pagamento")
+      ? '<input type="date" id="editPromessa-' + id + '" value="' + (t.data_promessa || "") + '" style="margin-top:6px;width:100%;">'
+      : "";
+    var valorField = (t.status === "Recebimento parcial")
+      ? '<input type="number" step="0.01" min="0.01" id="editValor-' + id + '" value="' + (t.valor_recebido != null ? t.valor_recebido : "") + '" placeholder="Valor recebido (R$)" style="margin-top:6px;width:100%;">'
+      : "";
+    item.innerHTML =
+      '<textarea id="editTexto-' + id + '" rows="2" style="width:100%;">' + escapeHtml(t.tratativa) + '</textarea>' +
+      promessaField + valorField +
+      '<div class="btn-row" style="margin-top:6px;">' +
+        '<button type="button" class="btn ghost" id="editCancelar-' + id + '" style="font-size:11px;padding:2px 8px;">cancelar</button>' +
+        '<button type="button" class="btn" id="editSalvar-' + id + '" style="font-size:11px;padding:2px 8px;">salvar</button>' +
+      '</div>';
+    document.getElementById("editCancelar-" + id).addEventListener("click", function () { preencherDetalhe(g); });
+    document.getElementById("editSalvar-" + id).addEventListener("click", function () { salvarEdicaoTratativa(id, g); });
+  }
+
+  async function salvarEdicaoTratativa(id, g) {
+    var t = STATE.tratativas.find(function (x) { return x.id === id; });
+    if (!t) return;
+    var novoTexto = document.getElementById("editTexto-" + id).value.trim();
+    if (!novoTexto) { alert("Escreva alguma coisa antes de salvar."); return; }
+    var promessaEl = document.getElementById("editPromessa-" + id);
+    var valorEl = document.getElementById("editValor-" + id);
+    var novaPromessa = promessaEl ? (promessaEl.value || null) : t.data_promessa;
+    var novoValor = valorEl ? (valorEl.value ? Number(valorEl.value) : null) : t.valor_recebido;
+    if (valorEl && (!novoValor || novoValor <= 0)) { alert("Informe um valor recebido válido."); return; }
+    var btn = document.getElementById("editSalvar-" + id);
+    btn.disabled = true; btn.textContent = "Salvando…";
+    var valorAntigo = t.valor_recebido;
+    try {
+      await api("/api/tratativas/editar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: id, tratativa: novoTexto, status: t.status, data_promessa: novaPromessa, valor_recebido: novoValor }),
+      });
+      t.tratativa = novoTexto;
+      t.data_promessa = novaPromessa;
+      t.valor_recebido = novoValor;
+      if (t.status === "Recebimento parcial" && !t.reconciliado) {
+        var delta = Number(novoValor || 0) - Number(valorAntigo || 0);
+        if (delta) ajustarKpiRecuperado(delta, t.data);
+      }
+      preencherDetalhe(g);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = "salvar";
+      alert("Erro ao salvar: " + err.message);
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---------- sangrias ----------
+  async function carregarSangrias() {
+    var errEl = document.getElementById("sgLoadErr");
+    errEl.style.display = "none";
+    try {
+      var data = await api("/api/sangrias");
+      SG_STATE.sangrias = data.sangrias || [];
+      SG_STATE.loaded = true;
+      montarFiltroLojaSangrias();
+      renderSangrias();
+    } catch (err) {
+      errEl.style.display = "block";
+      errEl.textContent = "Não foi possível carregar as sangrias: " + err.message;
+    }
+  }
+
+  function montarFiltroLojaSangrias() {
+    var lojaAnterior = SG_STATE.filtro.loja;
+    var operadorAnterior = SG_STATE.filtro.operador;
+    var lojas = new Set(), operadores = new Set();
+    SG_STATE.sangrias.forEach(function (s) {
+      if (s.loja) lojas.add(s.loja);
+      if (s.usuario_caixa) operadores.add(s.usuario_caixa);
+    });
+    var sel = document.getElementById("sgLoja");
+    sel.innerHTML = '<option value="">Todas as lojas</option>';
+    Array.from(lojas).sort().forEach(function (l) {
+      var o = document.createElement("option");
+      o.value = l; o.textContent = l;
+      sel.appendChild(o);
+    });
+    sel.value = lojas.has(lojaAnterior) ? lojaAnterior : "";
+    SG_STATE.filtro.loja = sel.value;
+
+    var selOp = document.getElementById("sgOperador");
+    selOp.innerHTML = '<option value="">Todos os responsáveis</option>';
+    Array.from(operadores).sort().forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o; opt.textContent = o;
+      selOp.appendChild(opt);
+    });
+    selOp.value = operadores.has(operadorAnterior) ? operadorAnterior : "";
+    SG_STATE.filtro.operador = selOp.value;
+  }
+
+  function sangriasFiltradas() {
+    var f = SG_STATE.filtro;
+    return SG_STATE.sangrias.filter(function (s) {
+      if (f.de && s.data < f.de) return false;
+      if (f.ate && s.data > f.ate) return false;
+      if (f.loja && s.loja !== f.loja) return false;
+      if (f.operador && s.usuario_caixa !== f.operador) return false;
+      if (f.cat && s.categoria !== f.cat) return false;
+      if (!f.cat && s.categoria === "suprimento") return false; // suprimento só aparece se filtrado explicitamente
+      if (f.busca) {
+        var alvo = (String(s.usuario_caixa || "") + " " + String(s.motivo || "") + " " + String(s.pessoa || "")).toUpperCase();
+        if (alvo.indexOf(f.busca.toUpperCase()) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function agruparSangriaPor(lista, campo) {
+    var map = new Map();
+    lista.forEach(function (s) {
+      var key = s[campo] || "—";
+      if (!map.has(key)) map.set(key, { chave: key, total: 0, itens: [] });
+      var g = map.get(key);
+      g.total += s.valor;
+      g.itens.push(s);
+    });
+    return Array.from(map.values()).sort(function (a, b) { return b.total - a.total; });
+  }
+
+  function renderSangrias() {
+    var filtradas = sangriasFiltradas();
+    var cofre = filtradas.filter(function (s) { return s.categoria === "cofre"; });
+    var despesas = filtradas.filter(function (s) { return s.categoria === "despesa"; });
+    var baixas = filtradas.filter(function (s) { return s.categoria === "baixa_credito"; });
+    var revisar = filtradas.filter(function (s) { return s.categoria === "revisar"; });
+
+    var totalCofre = cofre.reduce(function (a, s) { return a + s.valor; }, 0);
+    var totalDespesas = despesas.reduce(function (a, s) { return a + s.valor; }, 0);
+    var maiorCofre = cofre.reduce(function (m, s) { return (!m || s.valor > m.valor) ? s : m; }, null);
+
+    document.getElementById("sgKpis").innerHTML =
+      kpiCardPlain("Total no cofre", fmtMoeda(totalCofre), cofre.length + (cofre.length === 1 ? " lançamento" : " lançamentos"), "warn") +
+      kpiCardPlain("Total em despesas", fmtMoeda(totalDespesas), despesas.length + (despesas.length === 1 ? " lançamento" : " lançamentos"), "danger") +
+      kpiCardPlain("Maior valor pro cofre", maiorCofre ? fmtMoeda(maiorCofre.valor) : "—", maiorCofre ? (maiorCofre.pessoa || "") : "", maiorCofre && maiorCofre.valor >= SG_LIMIAR_ATENCAO ? "warn" : "") +
+      kpiCardPlain("A revisar", String(revisar.length), revisar.length ? "motivo não reconhecido" : "tudo classificado", revisar.length ? "danger" : "ok");
+
+    // --- resumo visual por loja (não conta suprimento, que já é excluído por padrão) ---
+    var relevantesPorLoja = filtradas.filter(function (s) { return s.categoria !== "suprimento"; });
+    var porLoja = agruparSangriaPor(relevantesPorLoja, "loja");
+    document.getElementById("sgLojaKpis").innerHTML = porLoja.length
+      ? porLoja.map(function (g) {
+          return kpiCardPlain(g.chave, fmtMoeda(g.total), g.itens.length + (g.itens.length === 1 ? " lançamento" : " lançamentos"), "");
+        }).join("")
+      : "";
+
+    var suprimentos = filtradas.filter(function (s) { return s.categoria === "suprimento"; });
+    document.getElementById("sgEmptyState").style.display = filtradas.length ? "none" : "block";
+
+    // --- suprimentos (só aparecem quando o filtro pede explicitamente) ---
+    var mostrarSuprimentos = SG_STATE.filtro.cat === "suprimento";
+    document.getElementById("sgSuprimentoSection").style.display = mostrarSuprimentos ? "block" : "none";
+    if (mostrarSuprimentos) {
+      document.getElementById("sgSuprimentoCount").textContent = suprimentos.length + (suprimentos.length === 1 ? " lançamento" : " lançamentos");
+      document.getElementById("sgSuprimentoList").innerHTML = suprimentos.map(renderSangriaRow).join("");
+    }
+
+    // --- a revisar ---
+    document.getElementById("sgRevisarSection").style.display = revisar.length ? "block" : "none";
+    document.getElementById("sgRevisarCount").textContent = revisar.length + (revisar.length === 1 ? " item" : " itens");
+    document.getElementById("sgRevisarList").innerHTML = revisar.map(renderSangriaRow).join("");
+
+    // --- cofre por pessoa ---
+    var gruposCofre = agruparSangriaPor(cofre, "pessoa");
+    document.getElementById("sgCofreCount").textContent = gruposCofre.length + (gruposCofre.length === 1 ? " pessoa" : " pessoas");
+    document.getElementById("sgCofreSection").style.display = SG_STATE.filtro.cat && SG_STATE.filtro.cat !== "cofre" ? "none" : "block";
+    document.getElementById("sgCofreList").innerHTML = gruposCofre.length
+      ? gruposCofre.map(function (g) { return renderGrupoRow(g, "sg-cofre", g.itens.length + (g.itens.length === 1 ? " sangria" : " sangrias")); }).join("")
+      : '<div class="empty">Nenhum lançamento de cofre nesse filtro.</div>';
+
+    // --- despesas por categoria ---
+    var gruposDespesa = agruparSangriaPor(despesas, "despesa_categoria");
+    document.getElementById("sgDespesaCount").textContent = gruposDespesa.length + (gruposDespesa.length === 1 ? " categoria" : " categorias");
+    document.getElementById("sgDespesaSection").style.display = SG_STATE.filtro.cat && SG_STATE.filtro.cat !== "despesa" ? "none" : "block";
+    document.getElementById("sgDespesaList").innerHTML = gruposDespesa.length
+      ? gruposDespesa.map(function (g) { return renderGrupoRow(g, "sg-despesa", g.itens.length + (g.itens.length === 1 ? " lançamento" : " lançamentos")); }).join("")
+      : '<div class="empty">Nenhuma despesa nesse filtro.</div>';
+
+    // --- baixas de crediário em dinheiro ---
+    document.getElementById("sgBaixaCount").textContent = baixas.length + (baixas.length === 1 ? " lançamento" : " lançamentos");
+    document.getElementById("sgBaixaSection").style.display = SG_STATE.filtro.cat && SG_STATE.filtro.cat !== "baixa_credito" ? "none" : "block";
+    document.getElementById("sgBaixaList").innerHTML = baixas.length
+      ? baixas.map(renderSangriaRow).join("")
+      : '<div class="empty">Nenhuma baixa de crediário nesse filtro.</div>';
+
+    // liga clique de expandir nos grupos
+    document.querySelectorAll(".grupo-row").forEach(function (row) {
+      row.addEventListener("click", function () {
+        var id = row.getAttribute("data-target");
+        var detail = document.getElementById(id);
+        var isOpen = detail.classList.contains("open");
+        detail.classList.toggle("open", !isOpen);
+        row.classList.toggle("open", !isOpen);
+      });
+    });
+  }
+
+  function renderGrupoRow(g, prefixo, sub) {
+    var id = prefixo + "-" + slug(String(g.chave));
+    var itensOrdenados = g.itens.slice().sort(function (a, b) { return b.data.localeCompare(a.data); });
+    var itensHtml = itensOrdenados.map(function (s) {
+      var atencao = s.valor >= SG_LIMIAR_ATENCAO;
+      return '<div class="doc-item"><span class="num">' + fmtData(s.data) + ' · ' + escapeHtml(s.motivo || "—") +
+        '<div class="sub">' + escapeHtml(s.loja || "") + ' · ' + escapeHtml(s.usuario_caixa || "—") + '</div></span>' +
+        '<span class="tabular" style="' + (atencao ? "color:var(--warn);font-weight:700;" : "") + '">' + fmtMoeda(s.valor) + '</span></div>';
+    }).join("");
+    return '<div class="grupo-row" data-target="' + id + '">' +
+      '<div><div class="grupo-nome">' + escapeHtml(String(g.chave)) + '</div><div class="grupo-meta">' + sub + '</div></div>' +
+      '<div class="grupo-total tabular">' + fmtMoeda(g.total) + '</div>' +
+      '<div class="chev">▸</div>' +
+      '</div>' +
+      '<div class="grupo-detail" id="' + id + '">' + itensHtml + '</div>';
+  }
+
+  function renderSangriaRow(s) {
+    var opClass = s.operacao === "Sangria" ? "sangria" : "suprimento";
+    var atencao = s.operacao === "Sangria" && s.valor >= SG_LIMIAR_ATENCAO;
+    return '<div class="sangria-row">' +
+      '<span class="tabular">' + fmtData(s.data) + '</span>' +
+      '<span><span class="loja-badge">' + escapeHtml(s.loja || "—") + '</span></span>' +
+      '<span class="op ' + opClass + '">' + escapeHtml(s.operacao) + (atencao ? " ⚠️" : "") + '</span>' +
+      '<span class="motivo">' + escapeHtml(s.motivo || "—") + '</span>' +
+      '<span class="valor tabular' + (atencao ? " atencao" : "") + '">' + fmtMoeda(s.valor) + '</span>' +
+      '<span>' + escapeHtml(s.usuario_caixa || "—") + '</span>' +
+      '</div>';
+  }
+
+  function kpiCardPlain(label, value, sub, cls) {
+    return '<div class="kpi ' + (cls || "") + '">' +
+      '<div class="label">' + label + '</div><div class="value tabular">' + value + '</div>' +
+      (sub ? '<div class="sub">' + sub + '</div>' : "") + '</div>';
+  }
+
+  function ativarTab(nome) {
+    var isCobranca = nome === "cobranca";
+    document.getElementById("viewCobranca").style.display = isCobranca ? "block" : "none";
+    document.getElementById("viewSangrias").style.display = isCobranca ? "none" : "block";
+    document.getElementById("tabCobranca").classList.toggle("active", isCobranca);
+    document.getElementById("tabSangrias").classList.toggle("active", !isCobranca);
+    if (!isCobranca && !SG_STATE.loaded) carregarSangrias();
+  }
+
+  function init() {
+    document.getElementById("fAno").addEventListener("change", function (e) { STATE.filtro.ano = e.target.value; render(); });
+    document.getElementById("fMes").addEventListener("change", function (e) { STATE.filtro.mes = e.target.value; render(); });
+    document.getElementById("fVendedor").addEventListener("change", function (e) { STATE.filtro.vendedor = e.target.value; render(); });
+    document.getElementById("fBusca").addEventListener("input", function (e) { STATE.filtro.busca = e.target.value; render(); });
+    document.getElementById("chipSemContato").addEventListener("click", function (e) {
+      STATE.filtro.semContato = !STATE.filtro.semContato;
+      e.target.classList.toggle("active", STATE.filtro.semContato);
+      render();
+    });
+    document.querySelectorAll(".chip-grupo").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var g = b.getAttribute("data-grupo");
+        var i = STATE.filtro.grupos.indexOf(g);
+        if (i === -1) STATE.filtro.grupos.push(g); else STATE.filtro.grupos.splice(i, 1);
+        if (STATE.filtro.grupos.length) STATE.filtro.excluirJvm = false;
+        render();
+      });
+    });
+    document.getElementById("chipGrupoLimpar").addEventListener("click", function () {
+      STATE.filtro.grupos = [];
+      render();
+    });
+    document.getElementById("refreshBtn").addEventListener("click", async function () {
+      var btn = this;
+      btn.disabled = true;
+      var textoOriginal = btn.textContent;
+      btn.textContent = "Atualizando…";
+      await Promise.all([carregarDados(), SG_STATE.loaded ? carregarSangrias() : Promise.resolve()]);
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+    });
+    document.getElementById("tabCobranca").addEventListener("click", function () { ativarTab("cobranca"); });
+    document.getElementById("tabSangrias").addEventListener("click", function () { ativarTab("sangrias"); });
+    document.getElementById("sgDe").addEventListener("change", function (e) { SG_STATE.filtro.de = e.target.value; renderSangrias(); });
+    document.getElementById("sgAte").addEventListener("change", function (e) { SG_STATE.filtro.ate = e.target.value; renderSangrias(); });
+    document.getElementById("sgLoja").addEventListener("change", function (e) { SG_STATE.filtro.loja = e.target.value; renderSangrias(); });
+    document.getElementById("sgOperador").addEventListener("change", function (e) { SG_STATE.filtro.operador = e.target.value; renderSangrias(); });
+    document.getElementById("sgCat").addEventListener("change", function (e) { SG_STATE.filtro.cat = e.target.value; renderSangrias(); });
+    document.getElementById("sgBusca").addEventListener("input", function (e) { SG_STATE.filtro.busca = e.target.value; renderSangrias(); });
+
+    carregarDados();
+  }
+})();
+</script>
+</body>
+</html>

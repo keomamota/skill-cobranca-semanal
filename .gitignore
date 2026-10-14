@@ -1,3 +1,6 @@
 .claude/settings.local.json
 relatorios/*
 !relatorios/historico.json
+cloudflare/worker/.dev.vars
+cloudflare/.env
+**/.dev.vars
