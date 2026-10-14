@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 2026-10-14T2-valor-real-x-juros -->
+<!-- build: 2026-10-14T3-default-ano-mes-vigentes -->
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -669,6 +669,10 @@
 
     var anos = new Set();
     STATE.titulos.forEach(function (t) { if (t.data_vencimento) anos.add(t.data_vencimento.slice(0, 4)); });
+    // Padrão do painel: ano e mês vigentes (fuso de Fortaleza), sempre.
+    var hojeFor = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Fortaleza", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    var anoVigente = hojeFor.slice(0, 4), mesVigente = hojeFor.slice(5, 7);
+    anos.add(anoVigente);
     var lista = Array.from(anos).sort().reverse();
     var sel = document.getElementById("fAno");
     sel.innerHTML = "";
@@ -682,8 +686,8 @@
     });
     if (!primeiroCarregamento && lista.indexOf(anoAnterior) !== -1) {
       sel.value = anoAnterior;
-    } else if (lista.length) {
-      sel.value = lista[0];
+    } else {
+      sel.value = anoVigente;
     }
     STATE.filtro.ano = sel.value;
 
@@ -696,7 +700,7 @@
       o.textContent = nome;
       mesSel.appendChild(o);
     });
-    mesSel.value = mesAnterior || "";
+    mesSel.value = primeiroCarregamento ? mesVigente : (mesAnterior || "");
     STATE.filtro.mes = mesSel.value;
 
     var vendedores = new Set();
