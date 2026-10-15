@@ -62,3 +62,10 @@ Diagnóstico inicial de '84% sem resolução' era grosseiro: funil ativo aberto 
 - Código publicado do roteador baixado com `wrangler init --from-dash` (versão 600eba8c, deploy de 2026-10-02): copiado para `cloudflare/vendedores-router/src/index.publicado-2026-10-02.js` (sem segredos; a TS local continua defasada).
 - **Regra real:** distribuição proporcional a `score_final ** 2` entre `DESTINOS_PERMITIDOS` (Wesley, Mikhaell, Geicy, Leonardo, Francisco). Camila e Kayllane não estão na lista e não recebem lead. Não existe "cota por vendedor" fixa.
 - **`lead_id = 'agente'`:** o código publicado NÃO grava esse valor nem o motivo "cota diária (transferência do agente)"; o `/rotear` grava o `leadId` que recebe. Há outro escritor em `log_roteamento` (Worker ou chamada direta ao D1) que a CLI não lista. Para identificar, é preciso a lista de Workers da conta no painel da Cloudflare (a aba do navegador do Claude não está logada).
+
+## Origem do `lead_id = 'agente'` — encontrada (15/10/2026)
+- **Escritor:** o Worker `nl-sales-hiper-mcp` (servidor MCP que o agente NL Sales consulta), ferramenta `consultar_desempenho_vendedores`. Lido com `wrangler init --from-dash`.
+- **É desenho, não bug:** a função `registrarEscolha` grava `lead_id = 'agente'` e `motivo = 'cota diaria (transferencia do agente)'` fixos, porque a ferramenta não recebe o id do lead (o único parâmetro é `somente_recomendados`).
+- **Efeito colateral:** a ferramenta registra uma "escolha" a CADA consulta, mesmo quando o agente não transfere. Por isso as linhas de roteamento (33 em 15/10) são o dobro dos leads novos (14), e as consultas entram na contagem da cota do dia.
+- **Desde 26/09 nenhuma linha vem do roteador `/rotear`:** a automação "Novo Lead" do Data Crazy parou de chamá-lo (último "cota diaria (roteador)" em 25/09). Isso explica `sem_atendente_24h` de 4 a 14 por dia e `saudavel = 0`.
+- **Para o KPI-norte voltar:** a ferramenta precisa receber o `leadId` (parâmetro novo, opcional) e o agente precisa passá-lo; e só deve registrar quando houver `leadId`. Mexe em produção e na configuração do agente.
