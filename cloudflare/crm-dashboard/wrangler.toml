@@ -1,0 +1,25 @@
+name = "nl-sales-crm-dashboard"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nl-sales-desempenho-vendedores"
+database_id = "6afa0419-2355-4871-8f80-4abf9caa843b"
+
+# Service binding: fetch direto Worker-a-Worker, sem passar pela internet
+# pública — fetch() cru entre dois *.workers.dev do mesmo domínio dá erro
+# Cloudflare 1042 (bloqueio anti-loop). Ver checarSaudeRoteamento em src/index.ts.
+[[services]]
+binding = "ROUTER"
+service = "nl-sales-vendedores-router"
+
+# Segredos (não vão neste arquivo — configurar via `wrangler secret put`):
+#   AUTH_USER              -> usuário do Basic Auth (mesmo padrão dos outros painéis: nobrelar)
+#   AUTH_PASSWORD           -> senha do Basic Auth (mesmo padrão dos outros painéis: homecenter)
+#   DATACRAZY_API_TOKEN     -> token dc_eyJ... do Data Crazy, usado só pelo /api/atividade-recente
+
+# Snapshot diário dos negócios (10h UTC, depois da sincronização das 03h do roteador).
+[triggers]
+crons = ["0 10 * * *"]
