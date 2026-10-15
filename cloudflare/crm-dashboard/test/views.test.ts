@@ -96,6 +96,13 @@ describe("renderVendedores", () => {
     expect(html).toContain("width:14.29%");
   });
 
+  it("barra do score sai com 2 casas, sem sequências longas de dígitos", () => {
+    const l = { ...dv.linhas[1], score: { ...score, user_id: "b", resolvidos: 20, score_final: 72.03474333025787 } };
+    const html = renderVendedores({ ...dv, linhas: [l] });
+    expect(html).not.toMatch(/\d{10,}/);
+    expect(html).toContain("width:72.03%");
+  });
+
   it("score nulo ou NaN não derruba a página", () => {
     const l = { ...dv.linhas[1], score: { ...score, score_final: NaN } };
     expect(() => renderVendedores({ ...dv, linhas: [l] })).not.toThrow();

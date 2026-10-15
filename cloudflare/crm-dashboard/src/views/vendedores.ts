@@ -82,7 +82,7 @@ export function renderVendedores(d: DadosVendedores): string {
       const sf = s && Number.isFinite(s.score_final) ? s.score_final : null;
       return `${cab}<div class="vr" role="row">
   <div><b>${pos}${esc(l.nome)}</b>${l.nota ? `<div style="font-size:12px;color:var(--nl-text-muted)">${esc(l.nota)}</div>` : ""}</div>
-  <div>${sf === null ? "—" : `<span class="num" style="font-weight:800;font-size:18px">${pctTxt(sf)}</span><div class="sbar" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, sf))}%"></i></div>`}</div>
+  <div>${sf === null ? "—" : `<span class="num" style="font-weight:800;font-size:18px">${pctTxt(sf)}</span><div class="sbar" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, sf)).toFixed(2)}%"></i></div>`}</div>
   <div class="num">${s ? Math.round(s.score_velocidade) : "—"}</div>
   <div class="num">${s ? Math.round(s.score_resolucao) : "—"}</div>
   <div class="num">${s ? Math.round(s.score_ganho) : "—"}</div>
