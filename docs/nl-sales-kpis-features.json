@@ -1,0 +1,302 @@
+[
+  {
+    "id": "R1.1",
+    "criterio": "O sistema DEVE definir lead novo como o lead roteado pela primeira vez na semana, com id real, sem duplicar o mesmo lead entre semanas. (Ajuste de 15/10: o D1 não guarda a primeira mensagem.)",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R1.6",
+    "criterio": "SE menos de 80% das linhas de roteamento das últimas 8 semanas trouxerem o id real do lead, ou menos de 80% desses leads tiverem negócio, ENTÃO o sistema DEVE mostrar o KPI-norte como \"indisponível\" com o motivo, e NÃO DEVE mostrar a taxa.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R1.2",
+    "criterio": "O sistema DEVE agrupar leads em coortes semanais e contar como ganho o negócio com status \"ganho\" até 30 dias depois da entrada do lead.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R1.3",
+    "criterio": "ENQUANTO uma coorte tiver menos de 30 dias, o sistema DEVE exibi-la marcada como \"parcial\" e fora da média móvel.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R1.4",
+    "criterio": "O sistema DEVE exibir a série das últimas 12 coortes e o valor da coorte fechada mais recente.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R1.5",
+    "criterio": "SE a data de ganho não existir no CRM, ENTÃO o sistema DEVE usar a data do primeiro snapshot em que o negócio apareceu como ganho (R7.2).",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R2.1",
+    "criterio": "O sistema DEVE calcular a % de negócios do funil ativo (pipeline de vendas, fora de Frio) que estão como ganho ou perdido, contando no denominador todos os abertos de qualquer idade e, entre os resolvidos, os dos últimos 60 dias. (Ajuste de 15/10: o D1 não guarda a data de criação do negócio.)",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R2.2",
+    "criterio": "O sistema DEVE listar, por vendedor, quantos negócios estão abertos há mais de 30 dias.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R2.3",
+    "criterio": "SE um negócio estiver numa etapa de perda mas com status aberto, ENTÃO o sistema DEVE contá-lo como \"inconsistente\" e NÃO como resolvido.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R3.1",
+    "criterio": "O sistema DEVE calcular, por coorte semanal de orçamentos, a % que virou ganho em até 30 dias.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R3.2",
+    "criterio": "O sistema DEVE mostrar o valor em R$ do orçamento ganho só quando o campo valor for diferente de zero, e o número de orçamentos sem valor ao lado.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R3.3",
+    "criterio": "QUANDO houver menos de 10 orçamentos na coorte, o sistema DEVE exibir \"amostra pequena\" em vez de uma taxa.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R4.1",
+    "criterio": "QUANDO a tag \"Follow-up urgente\" for aplicada a um lead, o sistema DEVE registrar o identificador do lead, o vendedor dono e a data de entrada na lista.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R4.2",
+    "criterio": "O sistema DEVE calcular a % dos leads que entraram na lista e responderam ou tiveram negócio movido em até 7 dias.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R4.3",
+    "criterio": "O sistema DEVE mostrar o resultado por vendedor, sem ranking público de punição.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R5.1",
+    "criterio": "O sistema DEVE considerar passagem o momento em que uma conversa atendida pelo NL Sales recebe um vendedor humano ou uma mensagem de vendedor é pedida pelo cliente.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R5.2",
+    "criterio": "O sistema DEVE considerar atendida a passagem com a primeira mensagem do vendedor humano em até 30 minutos de horário comercial.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R5.3",
+    "criterio": "SE a passagem ocorrer fora do horário comercial, ENTÃO o sistema DEVE contar os 30 minutos a partir da abertura seguinte.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R5.4",
+    "criterio": "O sistema DEVE mostrar a % atendida em ≤ 30 min e a lista das passagens atrasadas dos últimos 7 dias, por vendedor.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R5.5",
+    "criterio": "SE a conversa estiver na conta errada (\"Leonardo\"), ENTÃO o sistema DEVE sinalizá-la como \"sem dono válido\".",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R6.1",
+    "criterio": "A aba DEVE mostrar no topo o KPI-norte e as 4 obsessões, cada um com valor atual, meta provisória, cor (verde/amarelo/vermelho) e variação semanal.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R6.2",
+    "criterio": "Cada KPI DEVE exibir a definição em uma frase e a fonte do dado ao tocar/passar o mouse.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R6.3",
+    "criterio": "O sistema DEVE mostrar abaixo as métricas de apoio: tempo de 1ª resposta, leads parados > 7 dias, motivos de perda, passagens atrasadas e mensagens de erro do agente ao cliente (R11).",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R6.4",
+    "criterio": "A tela DEVE usar a identidade visual da Nobre Lar e funcionar em 375 px, 768 px e 1280 px sem rolagem horizontal.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R6.5",
+    "criterio": "A tela DEVE manter contraste AA e nunca depender só de cor para indicar bom/ruim.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R6.6",
+    "criterio": "Metas provisórias DEVEM aparecer rotuladas \"provisória, revisão em 04/12/2026\".",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R7.1",
+    "criterio": "O sistema DEVE sincronizar os dados do CRM ao menos uma vez por dia útil, só por leitura.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R7.2",
+    "criterio": "O sistema DEVE gravar um snapshot diário (data, negócio, etapa, status, atendente) para reconstruir histórico.",
+    "plano": "A",
+    "status": "pending"
+  },
+  {
+    "id": "R7.3",
+    "criterio": "SE a API do CRM falhar ou devolver lista vazia, ENTÃO o sistema DEVE manter o último dado bom e mostrar \"dados de <data>\", e NÃO zerar os KPIs.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R7.4",
+    "criterio": "O sistema DEVE guardar, por conversa, quem enviou cada mensagem (agente, vendedor ou cliente) para separar o que o agente atendeu sozinho.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R8.1",
+    "criterio": "As metas DEVEM ficar em configuração editável, não no código da tela.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R8.2",
+    "criterio": "As metas iniciais DEVEM ser: resolução ≥ 70% em 30 dias; orçamento → fechamento 20% a 40%; retorno do follow-up 25% a 40%; passagem atendida ≥ 80% em ≤ 30 min; norte sem meta numérica até haver 8 semanas de coorte.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R9.1",
+    "criterio": "O sistema DEVE gerar toda semana, sem alterar o CRM, a lista de negócios candidatos a baixa (parados > 30 dias, abaixo de um valor definido, e os 525 inconsistentes).",
+    "plano": "A (parcial: lista sob demanda; filtro de valor e geração semanal no Plano B)",
+    "status": "pending"
+  },
+  {
+    "id": "R9.2",
+    "criterio": "O sistema NUNCA DEVE marcar negócio como perdido sem aprovação explícita da Keoma.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R11.1",
+    "criterio": "O sistema DEVE contar, por dia, as mensagens do NL Sales ao cliente que contêm expressões de erro (por exemplo \"demorou mais do que o esperado\", \"instabilidade técnica\", \"tente novamente\", \"não consegui\") e a lista de expressões DEVE ser editável.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R11.2",
+    "criterio": "O sistema DEVE mostrar a contagem do dia, da semana e a série de 12 semanas, com meta 0.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R11.3",
+    "criterio": "O sistema DEVE listar as conversas afetadas (primeiro nome, hora, vendedor dono atual) e marcar as que ainda estão sem vendedor humano.",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R11.4",
+    "criterio": "SE uma conversa com erro do agente continuar sem vendedor humano por mais de 30 minutos de horário comercial, ENTÃO o sistema DEVE destacá-la como \"perdida se ninguém assumir\".",
+    "plano": "B",
+    "status": "pending"
+  },
+  {
+    "id": "R12.1",
+    "criterio": "O sistema DEVE exibir uma nova entrada \"Performance por vendedor\" no menu lateral vertical, na mesma aba de KPIs do dashboard.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.2",
+    "criterio": "O sistema DEVE listar, para cada vendedor ativo na janela de 60 dias: negócios, ganhos, perdidos, resolvidos, taxa de resolução, taxa de ganho suavizada, mediana de resposta, os três scores (velocidade, resolução, ganho), o score final e o nível de confiança.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.3",
+    "criterio": "O sistema DEVE explicar, em linguagem simples e na própria tela, (a) como o score é calculado (pesos 30% velocidade, 30% resolução e 40% ganho; confiança plena a partir de 10 resolvidos em 60 dias) e (b) a regra de distribuição EM VIGOR, lida do código publicado: desde 15/09/2026 o roteador usa cota diária por vendedor (antes: sorteio ponderado pelo score, com piso de 15 pontos). A tela NÃO DEVE descrever uma regra que não esteja publicada.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.4",
+    "criterio": "O sistema DEVE mostrar, por vendedor, a quantidade e o percentual de leads recebidos no período (7, 30 ou 60 dias, à escolha) e a data do último lead recebido.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.5",
+    "criterio": "O sistema DEVE mostrar ao lado a cota diária configurada de cada vendedor e destacar a diferença entre a participação real e a participação da cota quando passar de 10 pontos percentuais.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.6",
+    "criterio": "SE um vendedor estiver há mais de 14 dias sem receber lead, ENTÃO o sistema DEVE marcá-lo como \"fora da distribuição\" com a data do último lead.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.7",
+    "criterio": "O sistema DEVE mostrar, por vendedor, a distribuição dos negócios por situação: em atendimento (Novo Lead, Qualificação, Orçamento, Negociação), Frio, Ganho, Perdido e Inconsistente, cada um em quantidade e em percentual do total do vendedor.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.8",
+    "criterio": "QUANDO o vendedor tiver menos de 10 resolvidos, o sistema DEVE marcá-lo com \"confiança parcial\" e NÃO DEVE mostrá-lo como pior ou melhor que os demais.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.9",
+    "criterio": "O sistema DEVE mostrar a quantidade de leads ainda sem vendedor.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R12.10",
+    "criterio": "O sistema DEVE usar uma definição única de \"negócio da janela\" para as contagens por vendedor (pipeline \"Vendas Nobre Lar\": todos os abertos mais os ganhos e perdidos dos últimos 60 dias). Os scores vêm do roteador, calculados sobre todos os pipelines, e a tela DEVE avisar isso. O pipeline \"Prospecção B2B\" aparece em bloco separado.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R10.1",
+    "criterio": "A aba DEVE ficar atrás da mesma autenticação do dashboard.",
+    "plano": "A",
+    "status": "passing"
+  },
+  {
+    "id": "R10.2",
+    "criterio": "O sistema DEVE mascarar telefones e mostrar só o primeiro nome do cliente nas listas.",
+    "plano": "A",
+    "status": "passing"
+  }
+]
