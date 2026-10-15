@@ -1,5 +1,6 @@
 import { DataCrazyClient } from "./datacrazy-client";
 import { rotearKpis } from "./kpis/rotas";
+import { esc } from "./views/layout";
 import { gravarSnapshot } from "./kpis/dados";
 
 export interface Env {
@@ -14,8 +15,14 @@ export interface Env {
 function checkAuth(request: Request, env: Env): boolean {
   const auth = request.headers.get("Authorization");
   if (!auth || !auth.startsWith("Basic ")) return false;
-  const decoded = atob(auth.slice(6));
+  let decoded: string;
+  try {
+    decoded = atob(auth.slice(6));
+  } catch {
+    return false; // cabeçalho malformado: 401, não 500
+  }
   const sep = decoded.indexOf(":");
+  if (sep < 0) return false;
   const user = decoded.slice(0, sep);
   const pass = decoded.slice(sep + 1);
   return user === env.AUTH_USER && pass === env.AUTH_PASSWORD;
@@ -223,6 +230,20 @@ async function atividadeRecente(env: Env) {
   const out = [];
 
   for (const row of rows) {
+    // Transferência do agente grava lead_id = 'agente' (sem id real): não há o que
+    // consultar no CRM, e consultar gerava 30 chamadas inúteis por carga.
+    if (row.lead_id === "agente") {
+      out.push({
+        leadId: "agente",
+        nomeCliente: "(transferência do agente)",
+        vendedor: row.vendedor_nome,
+        etapa: "",
+        roteadoEm: row.roteado_em,
+        respondido: false,
+        minutosEspera: null,
+      });
+      continue;
+    }
     let nomeCliente = "";
     let etapa = "";
     try {
@@ -325,7 +346,7 @@ function renderHTML(data: Awaited<ReturnType<typeof carregarDados>>, saude: Saud
       return `
       <div class="row">
         <span class="rank">${i + 1}</span>
-        <div class="who"><span class="name">${v.nome}</span><span class="sub">${v.resolvidos} negócios resolvidos/60d</span></div>
+        <div class="who"><span class="name">${esc(v.nome)}</span><span class="sub">${v.resolvidos} negócios resolvidos/60d</span></div>
         ${confChip}
         <div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, Math.max(0, v.score_final))}%"></div></div></div>
         <div class="metric metric-${classeVelocidadeResposta(v.mediana_minutos_resposta)}"><span class="v num">${fmtMin(v.mediana_minutos_resposta)}</span></div>
@@ -523,7 +544,7 @@ function renderHTML(data: Awaited<ReturnType<typeof carregarDados>>, saude: Saud
           <label>Vendedor</label>
           <select id="filtro-vendedor">
             <option value="total">Total da loja</option>
-            ${vendedores.map((v) => `<option value="${v.user_id}">${v.nome}</option>`).join("")}
+            ${vendedores.map((v) => `<option value="${esc(v.user_id)}">${esc(v.nome)}</option>`).join("")}
           </select>
         </div>
       </div>
@@ -557,6 +578,11 @@ function renderHTML(data: Awaited<ReturnType<typeof carregarDados>>, saude: Saud
 
 </div>
 <script>
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
 async function carregarAtividade() {
   const el = document.getElementById('atividade-lista');
   try {
@@ -572,8 +598,8 @@ async function carregarAtividade() {
       var roteado = new Date(d.roteadoEm.replace(' ', 'T') + 'Z');
       var horasAtras = Math.round((Date.now() - roteado.getTime()) / 3600000 * 10) / 10;
       return '<div class="ativ-item">' +
-        '<span class="cliente">' + (d.nomeCliente || '(sem nome)') + '<br><span style="font-weight:400;color:var(--ink-faint);font-size:11px">' + (d.etapa || '') + '</span></span>' +
-        '<span>' + (d.vendedor || '—') + '</span>' +
+        '<span class="cliente">' + esc(d.nomeCliente || '(sem nome)') + '<br><span style="font-weight:400;color:var(--ink-faint);font-size:11px">' + esc(d.etapa || '') + '</span></span>' +
+        '<span>' + esc(d.vendedor || '—') + '</span>' +
         '<span>há ' + horasAtras + 'h</span>' +
         '<span class="status ' + statusClass + '">' + statusTxt + '</span>' +
         '</div>';
