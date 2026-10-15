@@ -52,7 +52,7 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--nl-yellow);outline-
 .hint{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--nl-gray-border);color:var(--nl-text-muted);font-size:12px;font-weight:800;margin-left:6px;cursor:help;position:relative;border:0}
 .hint .tip{display:none;position:absolute;left:28px;top:-4px;z-index:5;width:260px;background:var(--nl-black);color:#fff;font-weight:400;font-size:12px;padding:10px 12px;border-radius:8px;text-align:left}
 .hint:hover .tip,.hint:focus .tip{display:block}
-@media (max-width:900px){.side{display:none}.nav-mobile{display:flex;gap:8px;padding:10px 16px;background:var(--nl-side);flex-wrap:wrap}.nav-mobile a{color:#fff;font-size:13px;padding:10px 12px;border-radius:6px;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}.nav-mobile a.on{background:var(--nl-yellow);color:var(--nl-black);font-weight:700}.main{padding:16px}.header{padding:14px 16px}}
+@media (max-width:900px){.hint{width:44px;height:44px;font-size:14px}.side{display:none}.nav-mobile{display:flex;gap:8px;padding:10px 16px;background:var(--nl-side);flex-wrap:wrap}.nav-mobile a{color:#fff;font-size:13px;padding:10px 12px;border-radius:6px;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}.nav-mobile a.on{background:var(--nl-yellow);color:var(--nl-black);font-weight:700}.main{padding:16px}.header{padding:14px 16px}}
 `;
 
 export interface ArgsShell {

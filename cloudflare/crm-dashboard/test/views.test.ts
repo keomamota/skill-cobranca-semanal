@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { esc, primeiroNome, renderShell } from "../src/views/layout";
+import { esc, primeiroNome, renderShell, CSS } from "../src/views/layout";
 import { renderVendedores, type DadosVendedores } from "../src/views/vendedores";
 import { renderKpis, type DadosKpis } from "../src/views/kpis";
 import { METAS_PADRAO } from "../src/kpis/metas";
@@ -18,6 +18,10 @@ describe("layout", () => {
     for (const t of ["558893152163", "(88) 99315-2163", "12345", "a@b.com", "", null]) {
       expect(primeiroNome(t as string | null)).toBe("cliente");
     }
+  });
+
+  it("no celular a dica '?' tem alvo de toque de 44 px", () => {
+    expect(CSS).toMatch(/max-width:900px\)\{.*\.hint\{width:44px;height:44px/s);
   });
 
   it("menu tem as duas entradas e marca a ativa com aria-current", () => {
