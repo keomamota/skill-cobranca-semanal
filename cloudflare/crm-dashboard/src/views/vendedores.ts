@@ -7,7 +7,7 @@ export interface DadosVendedores {
   linhas: LinhaRanking[];
   b2b: { nome: string; funil: ResumoFunil }[];
   totalLeads: number;
-  regra: { descricao: string; desde: string; cotaConfigurada: boolean };
+  regra: { descricao: string; desde: string };
   calculadoEm: string | null;
   desatualizado: boolean;
   janelaLeads: 7 | 30 | 60;
@@ -48,9 +48,9 @@ function celulaLeads(l: LinhaRanking): string {
   const p = l.leads;
   if (!p) return `<span class="num"><b>0</b> · 0,0%</span><div style="font-size:12px;color:var(--nl-text-muted)">sem lead no período</div>`;
   const cota =
-    p.cotaDia === null
-      ? `<div style="font-size:12px;color:var(--nl-text-muted)">cota não configurada</div>`
-      : `<div style="font-size:12px;${p.destaque ? "" : "color:var(--nl-text-muted)"}" class="${p.destaque ? "destaque" : ""}">cota ${p.cotaDia}/dia · ${pctTxt(p.pctCota ?? 0)}% da cota · desvio ${(p.desvioPP ?? 0) >= 0 ? "+" : ""}${pctTxt(p.desvioPP ?? 0)} pp${p.destaque ? " (acima de 10 pp)" : ""}</div>`;
+    p.pctEsperado === null
+      ? `<div style="font-size:12px;color:var(--nl-text-muted)">sem participação esperada (fora da lista de destinos)</div>`
+      : `<div style="font-size:12px;${p.destaque ? "" : "color:var(--nl-text-muted)"}" class="${p.destaque ? "destaque" : ""}">esperado ${pctTxt(p.pctEsperado)}% pela regra · desvio ${(p.desvioPP ?? 0) >= 0 ? "+" : ""}${pctTxt(p.desvioPP ?? 0)} pp${p.destaque ? " (acima de 10 pp)" : ""}</div>`;
   return `<span class="num"><b>${p.n}</b> · ${pctTxt(p.pct)}%</span><div style="font-size:12px;color:var(--nl-text-muted)">último lead em ${p.ultimo ? esc(p.ultimo.slice(0, 10)) : "—"}</div>${cota}`;
 }
 
@@ -135,7 +135,7 @@ ${aviso}
   </div>
   <div>
     <h4>Como os leads são distribuídos hoje</h4>
-    <p style="margin:8px 0 0;font-size:13px">${esc(d.regra.descricao)} Em vigor desde ${esc(d.regra.desde)}.${d.regra.cotaConfigurada ? "" : " As cotas por vendedor ainda não foram configuradas."}</p>
+    <p style="margin:8px 0 0;font-size:13px">${esc(d.regra.descricao)} Em vigor desde ${esc(d.regra.desde)}.</p>
   </div>
 </section>
 <div class="placar-h" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px"><h3 class="sec" style="margin:0">Ranking e distribuição de leads</h3><span style="font-size:12px;color:var(--nl-text-muted)">${d.totalLeads} leads nos últimos ${d.janelaLeads} dias · ${sv}</span></div>

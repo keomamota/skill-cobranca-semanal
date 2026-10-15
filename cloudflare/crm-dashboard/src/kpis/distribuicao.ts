@@ -13,8 +13,8 @@ export interface Participacao {
   ultimo: string | null;
   dias: number | null;
   foraDaDistribuicao: boolean;
-  cotaDia: number | null;
-  pctCota: number | null;
+  peso: number | null;
+  pctEsperado: number | null;
   desvioPP: number | null;
   destaque: boolean;
 }
@@ -26,7 +26,7 @@ export function participacao(
   rows: LeadsRecebidos[],
   opts: {
     agora: Date;
-    cotaDia?: Record<string, number>;
+    pesos?: Record<string, number>; // peso relativo de cada vendedor segundo a regra em vigor
     vendedoresAtivos?: string[];
     ultimoPorVendedor?: Map<string, string>;
   }
@@ -34,8 +34,8 @@ export function participacao(
   const porId = new Map(rows.map((r) => [r.user_id, r]));
   const ids = new Set<string>([...porId.keys(), ...(opts.vendedoresAtivos ?? [])]);
   const total = rows.reduce((s, r) => s + r.n, 0);
-  const cotas = opts.cotaDia ?? {};
-  const somaCotas = [...ids].reduce((s, id) => s + (cotas[id] ?? 0), 0);
+  const pesos = opts.pesos ?? {};
+  const somaPesos = [...ids].reduce((s, id) => s + (pesos[id] ?? 0), 0);
 
   return [...ids]
     .map((id) => {
@@ -44,9 +44,9 @@ export function participacao(
       const ultimo = opts.ultimoPorVendedor?.get(id) ?? r?.ultimo ?? null;
       const dias = diasDesde(ultimo, opts.agora);
       const pct = total > 0 ? (n / total) * 100 : 0;
-      const cota = cotas[id];
-      const pctCota = cota !== undefined && somaCotas > 0 ? (cota / somaCotas) * 100 : null;
-      const desvioPP = pctCota === null ? null : pct - pctCota;
+      const peso = pesos[id];
+      const pctEsperado = peso !== undefined && somaPesos > 0 ? (peso / somaPesos) * 100 : null;
+      const desvioPP = pctEsperado === null ? null : pct - pctEsperado;
       return {
         user_id: id,
         n,
@@ -54,8 +54,8 @@ export function participacao(
         ultimo,
         dias,
         foraDaDistribuicao: dias === null || dias > DIAS_FORA_DA_DISTRIBUICAO,
-        cotaDia: cota ?? null,
-        pctCota,
+        peso: peso ?? null,
+        pctEsperado,
         desvioPP,
         destaque: desvioPP !== null && Math.abs(desvioPP) > LIMITE_DESVIO_PP,
       } satisfies Participacao;

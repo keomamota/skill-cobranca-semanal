@@ -48,10 +48,10 @@ describe("participacao", () => {
     expect(p[0].foraDaDistribuicao).toBe(true);
   });
 
-  it("desvio contra a cota: destaca acima de 10 pp com valor exato e não destaca abaixo", () => {
-    const p = participacao(rows, { agora, cotaDia: { m: 12, w: 12, c: 6 } });
+  it("desvio contra a regra: destaca acima de 10 pp com valor exato e não destaca abaixo", () => {
+    const p = participacao(rows, { agora, pesos: { m: 12, w: 12, c: 6 } });
     const m = p.find((x) => x.user_id === "m")!;
-    expect(m.pctCota).toBeCloseTo(40, 5);
+    expect(m.pctEsperado).toBeCloseTo(40, 5);
     expect(m.desvioPP).toBeCloseTo(20, 5);
     expect(m.destaque).toBe(true);
     const w = p.find((x) => x.user_id === "w")!;
@@ -59,7 +59,7 @@ describe("participacao", () => {
     expect(w.destaque).toBe(false); // exatamente 10 pp não destaca
   });
 
-  it("sem cota configurada, não há desvio", () => {
+  it("sem pesos, não há desvio", () => {
     const p = participacao(rows, { agora });
     expect(p.every((x) => x.desvioPP === null && x.destaque === false)).toBe(true);
   });
@@ -68,5 +68,38 @@ describe("participacao", () => {
     expect(participacao([], { agora })).toEqual([]);
     const z = participacao([{ user_id: "a", n: 0, ultimo: null }], { agora });
     expect(z[0].pct).toBe(0);
+  });
+});
+
+import { pesosDaRegra, REGRA_EM_VIGOR } from "../src/kpis/regra-distribuicao";
+
+describe("pesosDaRegra (regra publicada do roteador)", () => {
+  const [w, m] = REGRA_EM_VIGOR.destinosPermitidos;
+
+  it("peso = score ao quadrado, só para os destinos permitidos", () => {
+    const p = pesosDaRegra([
+      { user_id: w, score_final: 70 },
+      { user_id: m, score_final: 50 },
+      { user_id: "fora-da-lista", score_final: 90 },
+    ]);
+    expect(p[w]).toBe(4900);
+    expect(p[m]).toBe(2500);
+    expect(p["fora-da-lista"]).toBeUndefined();
+  });
+
+  it("score nulo, negativo ou inválido vira peso zero", () => {
+    const p = pesosDaRegra([
+      { user_id: w, score_final: NaN },
+      { user_id: m, score_final: -5 },
+    ]);
+    expect(p[w]).toBe(0);
+    expect(p[m]).toBe(0);
+  });
+
+  it("a participação esperada vem da regra: 70 contra 50 dá 66,2% e 33,8% entre dois", () => {
+    const pesos = pesosDaRegra([{ user_id: w, score_final: 70 }, { user_id: m, score_final: 50 }]);
+    const r = participacao([{ user_id: w, n: 10, ultimo: "2026-10-15 10:00:00" }, { user_id: m, n: 10, ultimo: "2026-10-15 10:00:00" }], { agora: new Date("2026-10-15T18:00:00Z"), pesos });
+    expect(r.find((x) => x.user_id === w)!.pctEsperado).toBeCloseTo(66.22, 1);
+    expect(r.find((x) => x.user_id === w)!.destaque).toBe(true); // 50% real contra 66,2% esperado: -16,2 pp
   });
 });

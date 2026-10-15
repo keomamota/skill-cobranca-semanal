@@ -7,7 +7,7 @@ import { desatualizado, maisAntiga } from "./frescor";
 import { candidatosBaixa, respostaCandidatos } from "./candidatos-baixa";
 import { avaliarQualidadeLeads } from "./qualidade";
 import { horasDesde } from "./datas";
-import { REGRA_EM_VIGOR } from "./regra-distribuicao";
+import { REGRA_EM_VIGOR, pesosDaRegra } from "./regra-distribuicao";
 import {
   PIPELINE_VENDAS, PIPELINE_B2B, carregarScores, carregarNomes, carregarLinhasFunil, carregarLeadsRecebidos,
   carregarUltimoLeadPorVendedor, carregarContagemLeads, carregarCoortes, carregarAbertos,
@@ -57,7 +57,7 @@ async function vendedores(url: URL, env: EnvKpis, agora: Date): Promise<Response
   ]);
   const part = participacao(leads, {
     agora,
-    cotaDia: REGRA_EM_VIGOR.cotaDia,
+    pesos: pesosDaRegra(scores),
     vendedoresAtivos: scores.map((s) => s.user_id),
     ultimoPorVendedor: ultimos,
   });
@@ -67,11 +67,7 @@ async function vendedores(url: URL, env: EnvKpis, agora: Date): Promise<Response
     linhas,
     b2b: [...resumirFunil(b2b).entries()].map(([id, funil]) => ({ nome: nomes.get(id) ?? "Sem vendedor", funil })),
     totalLeads: leads.reduce((s, l) => s + l.n, 0),
-    regra: {
-      descricao: REGRA_EM_VIGOR.descricao,
-      desde: REGRA_EM_VIGOR.desde,
-      cotaConfigurada: Object.keys(REGRA_EM_VIGOR.cotaDia).length > 0,
-    },
+    regra: { descricao: REGRA_EM_VIGOR.descricao, desde: REGRA_EM_VIGOR.desde },
     calculadoEm,
     desatualizado: desatualizado(calculadoEm, agora),
     janelaLeads: dias,

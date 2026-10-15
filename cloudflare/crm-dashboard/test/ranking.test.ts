@@ -35,7 +35,7 @@ describe("montarRanking", () => {
   });
 
   it("quem recebeu lead e não tem score aparece, sem score, no fim", () => {
-    const leads = [{ user_id: "z", n: 5, pct: 50, ultimo: null, dias: null, foraDaDistribuicao: true, cotaDia: null, pctCota: null, desvioPP: null, destaque: false }];
+    const leads = [{ user_id: "z", n: 5, pct: 50, ultimo: null, dias: null, foraDaDistribuicao: true, peso: null, pctEsperado: null, desvioPP: null, destaque: false }];
     const r = montarRanking(scores, new Map(), leads, new Map([["z", "Zélia"]]));
     const z = r[r.length - 1];
     expect(z.user_id).toBe("z");

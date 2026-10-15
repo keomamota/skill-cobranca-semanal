@@ -34,7 +34,7 @@ describe("layout", () => {
 });
 
 const score = { user_id: "a", nome: "Ana <b>", resolvidos: 5, taxa_resolucao: 0.2, taxa_ganho_suavizada: 0.3, mediana_minutos_resposta: 1, score_velocidade: 100, score_resolucao: 40, score_ganho: 30, score_final: 55, calculado_em: "2026-10-15 03:01:03" };
-const leads = { user_id: "a", n: 7, pct: 50, ultimo: "2026-10-15 10:00:00", dias: 0, foraDaDistribuicao: false, cotaDia: 5, pctCota: 25, desvioPP: 25, destaque: true };
+const leads = { user_id: "a", n: 7, pct: 50, ultimo: "2026-10-15 10:00:00", dias: 0, foraDaDistribuicao: false, peso: 5, pctEsperado: 25, desvioPP: 25, destaque: true };
 const dv: DadosVendedores = {
   linhas: [
     { user_id: "a", nome: "Ana <b>", score, confianca: "parcial", nota: "confiança parcial: 5 resolvidos", funil: { ...funilVazio(), total: 10, em_atendimento: 2, frio: 3, ganho: 2, perdido: 2, inconsistente: 1 }, leads },
@@ -42,7 +42,7 @@ const dv: DadosVendedores = {
   ],
   b2b: [{ nome: "Beto", funil: { ...funilVazio(), total: 3, em_atendimento: 3 } }],
   totalLeads: 14,
-  regra: { descricao: "Cota diária por vendedor.", desde: "2026-09-15", cotaConfigurada: true },
+  regra: { descricao: "Distribuição proporcional ao score ao quadrado.", desde: "2026-09-15" },
   calculadoEm: "2026-10-15 03:01:03",
   desatualizado: false,
   janelaLeads: 60,
@@ -53,7 +53,7 @@ describe("renderVendedores", () => {
   it("mostra critérios, regra em vigor, seletor 7/30/60 e escapa nomes", () => {
     const html = renderVendedores(dv);
     expect(html).toContain("Velocidade 30%");
-    expect(html).toContain("Cota diária por vendedor.");
+    expect(html).toContain("Distribuição proporcional ao score ao quadrado.");
     expect(html).toContain('href="?dias=7"');
     expect(html).toContain('href="?dias=60" aria-current="true"');
     expect(html).toContain("Ana &lt;b&gt;");
@@ -62,7 +62,7 @@ describe("renderVendedores", () => {
 
   it("destaca o desvio da cota acima de 10 pp com o valor", () => {
     const html = renderVendedores(dv);
-    expect(html).toContain("cota 5/dia");
+    expect(html).toContain("esperado 25,0% pela regra");
     expect(html).toContain("desvio +25,0 pp (acima de 10 pp)");
   });
 
