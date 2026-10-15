@@ -37,3 +37,9 @@ export function candidatosBaixa(linhas: NegocioAberto[], agora: Date): Candidato
   }
   return out.sort((a, b) => (b.diasParado ?? -1) - (a.diasParado ?? -1));
 }
+
+// A resposta da API diz o total REAL e avisa quando cortou, para a lista nunca parecer completa.
+export function respostaCandidatos(todos: CandidatoBaixa[], limite = 500) {
+  const candidatos = todos.slice(0, limite);
+  return { total: todos.length, retornados: candidatos.length, truncado: todos.length > limite, candidatos };
+}

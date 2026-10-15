@@ -4,7 +4,7 @@ import { montarRanking } from "./ranking";
 import { exibirCoortes, coorteFechadaMaisRecente, coorteSemanaAnterior } from "./norte";
 import { statusMeta, mesclarMetas } from "./metas";
 import { desatualizado, maisAntiga } from "./frescor";
-import { candidatosBaixa } from "./candidatos-baixa";
+import { candidatosBaixa, respostaCandidatos } from "./candidatos-baixa";
 import { avaliarQualidadeLeads } from "./qualidade";
 import { horasDesde } from "./datas";
 import { REGRA_EM_VIGOR } from "./regra-distribuicao";
@@ -37,8 +37,8 @@ export async function rotearKpis(url: URL, env: EnvKpis, agora = new Date()): Pr
   if (url.pathname === "/kpis/vendedores") return vendedores(url, env, agora);
   if (url.pathname === "/kpis") return kpis(env, agora);
   if (url.pathname === "/api/kpis/candidatos-baixa") {
-    const c = candidatosBaixa(await carregarAbertos(env.DB), agora).slice(0, 500);
-    return Response.json({ total: c.length, candidatos: c });
+    const c = candidatosBaixa(await carregarAbertos(env.DB), agora);
+    return Response.json(respostaCandidatos(c, 500));
   }
   return null;
 }

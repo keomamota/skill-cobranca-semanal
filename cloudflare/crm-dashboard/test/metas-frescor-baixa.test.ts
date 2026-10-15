@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { METAS_PADRAO, mesclarMetas, statusMeta } from "../src/kpis/metas";
 import { desatualizado, maisAntiga } from "../src/kpis/frescor";
-import { candidatosBaixa } from "../src/kpis/candidatos-baixa";
+import { candidatosBaixa, respostaCandidatos } from "../src/kpis/candidatos-baixa";
 
 describe("statusMeta", () => {
   const m = METAS_PADRAO.resolucao;
@@ -92,5 +92,23 @@ describe("candidatosBaixa", () => {
 
   it("ganho e perdido nunca são candidatos", () => {
     expect(candidatosBaixa([n("1", "Ganho", "2026-01-01T00:00:00Z", "won")], agora)).toEqual([]);
+  });
+});
+
+describe("respostaCandidatos", () => {
+  const mk = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ id: String(i), codigo: i, vendedor: "V", etapa: "Orçamento", motivo: "parado_30_dias" as const, diasParado: 40 }));
+
+  it("total é o real e avisa quando a lista foi cortada", () => {
+    const r = respostaCandidatos(mk(746), 500);
+    expect(r.total).toBe(746);
+    expect(r.retornados).toBe(500);
+    expect(r.truncado).toBe(true);
+    expect(r.candidatos).toHaveLength(500);
+  });
+
+  it("sem corte quando cabe", () => {
+    const r = respostaCandidatos(mk(3), 500);
+    expect(r).toMatchObject({ total: 3, retornados: 3, truncado: false });
   });
 });
