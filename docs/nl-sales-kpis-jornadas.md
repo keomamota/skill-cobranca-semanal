@@ -53,7 +53,7 @@ Roteiro de teste depois da implementação do Plano A. Status por passo: `pendin
 |---|---|---|---|
 | 1 | Simular dado com mais de 36 h (alterar `synced_at` em cópia local do D1) | Faixa amarela "Mostrando dados de <data>"; os valores não zeram | ✅ por teste unitário (frescor: 38 h é desatualizado); não simulado em produção |
 | 2 | Simular data vazia ou inválida | "data desconhecida" e faixa de dado antigo; nunca "dados de  (UTC)" | ✅ por teste unitário (data vazia ou inválida nunca é atual) |
-| 3 | Rodar o cron do snapshot duas vezes no mesmo dia | A segunda execução não duplica linhas em `negocios_snapshot` | ⏳ idempotência validada em SQLite; falta o primeiro cron em produção (10h UTC) |
+| 3 | Rodar o cron do snapshot duas vezes no mesmo dia | A segunda execução não duplica linhas em `negocios_snapshot` | ✅ primeiro cron rodou em 16/10: 2.737 linhas em `negocios_snapshot` (idempotência validada em SQLite) |
 | 4 | Rodar o snapshot com `negocios` sem sincronização do dia | Nenhuma linha nova é gravada | ⏳ guarda de sync validada em SQLite; falta conferir em produção depois do primeiro cron |
 
 ## J5 — Limpeza do funil, só leitura  (R9.1, R9.2)
