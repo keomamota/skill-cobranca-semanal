@@ -36,7 +36,8 @@
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
-    const T = [0.2, 3.9, 7.6];
+    const T = [0.35, 5.41, 10.52];
+    const E = [5.34, 10.45];
     const n0 = { v: 0 }, n1 = { v: 0 }, n2 = { v: 0 };
     [0, 1, 2].forEach((i) => {
       const t = T[i];
@@ -46,14 +47,14 @@
       tl.fromTo("#s5-tb" + i, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t + 1.0);
       tl.fromTo("#s5-b" + i, { x: 1100, opacity: 0, scale: 0.9 }, { x: 0, opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.4)" }, t + 1.0);
       if (i < 2) {
-        ["#s5-l", "#s5-ta", "#s5-a", "#s5-tb", "#s5-b"].forEach((p) => tl.to(p + i, { opacity: 0, x: p === "#s5-b" || p === "#s5-tb" ? 600 : -600, duration: 0.3, ease: "power2.in" }, t + 2.2));
+        ["#s5-l", "#s5-ta", "#s5-a", "#s5-tb", "#s5-b"].forEach((p) => tl.set(p + i, { opacity: 0 }, E[i]));
       }
     });
     tl.fromTo(n0, { v: 0 }, { v: 16.5, duration: 0.9, ease: "power3.out", onUpdate() { document.querySelector("#s5-n0").textContent = n0.v.toFixed(1).replace(".", ",") + " s"; } }, T[0] + 1.2);
     tl.fromTo(n1, { v: 0 }, { v: 99.5, duration: 0.9, ease: "power3.out", onUpdate() { document.querySelector("#s5-n1").textContent = n1.v.toFixed(1).replace(".", ",") + "%"; } }, T[1] + 1.2);
     tl.fromTo(n2, { v: 0 }, { v: 100, duration: 0.9, ease: "power3.out", onUpdate() { document.querySelector("#s5-n2").textContent = Math.round(n2.v) + "%"; } }, T[2] + 1.2);
-    tl.fromTo("#s5-src", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 9.0);
-    tl.fromTo("#s5-tape", { x: 0 }, { x: -340, duration: 10, ease: "none" }, 2);
+    tl.fromTo("#s5-src", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 12.0);
+    tl.fromTo("#s5-tape", { x: 0 }, { x: -340, duration: 14, ease: "none" }, 2);
     tl.timeScale(0.92593);
     tl.paused(false);
     const master = gsap.timeline({ paused: true });
