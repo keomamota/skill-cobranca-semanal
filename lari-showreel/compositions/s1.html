@@ -1,0 +1,51 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #FFD60A; overflow: hidden; font-family: 'Archivo Black', 'Inter', sans-serif; color: #111; }
+    .s1-tape { position: absolute; left: -300px; width: 2600px; height: 120px; background: repeating-linear-gradient(-45deg, #111 0 44px, #FFD60A 44px 88px); }
+    #s1-tape-a { top: 10px; }
+    #s1-tape-b { top: 985px; }
+    #s1-word { position: absolute; left: 100px; top: 215px; display: flex; gap: 14px; }
+    .s1-l { font-size: 420px; line-height: 1; color: #111; text-shadow: 14px 14px 0 #fff; }
+    #s1-port { position: absolute; left: 1360px; top: 290px; width: 440px; height: 440px; border-radius: 50%; border: 14px solid #111; box-shadow: 18px 18px 0 #111; overflow: hidden; background: #fff; }
+    #s1-port img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #s1-ia { position: absolute; left: 1300px; top: 250px; width: 150px; height: 150px; border-radius: 50%; background: #00A896; border: 8px solid #111; display: flex; align-items: center; justify-content: center; font-size: 62px; color: #111; }
+    #s1-sub { position: absolute; left: 100px; top: 660px; background: #111; color: #FFD60A; font-family: 'Inter', sans-serif; font-weight: 900; font-size: 62px; padding: 14px 34px; letter-spacing: -0.5px; }
+    .s1-w { position: absolute; top: 775px; font-size: 92px; letter-spacing: -2px; }
+    .s1-u { position: absolute; top: 880px; height: 14px; background: #111; width: 0; }
+  </style>
+  <div id="root" data-composition-id="s1" data-width="1920" data-height="1080">
+    <div class="s1-tape" id="s1-tape-a"></div>
+    <div class="s1-tape" id="s1-tape-b"></div>
+    <div id="s1-word"><span class="s1-l" id="s1-l0">L</span><span class="s1-l" id="s1-l1">A</span><span class="s1-l" id="s1-l2">R</span><span class="s1-l" id="s1-l3">I</span></div>
+    <div id="s1-port"><img src="assets/lari.png" alt="Lari" /></div>
+    <div id="s1-ia">IA</div>
+    <div id="s1-sub">atendente da Nobre Lar</div>
+    <div class="s1-w" id="s1-w0" style="left:100px">BUSCA</div><div class="s1-u" id="s1-u0" style="left:100px"></div>
+    <div class="s1-w" id="s1-w1" style="left:560px">SUGERE</div><div class="s1-u" id="s1-u1" style="left:560px"></div>
+    <div class="s1-w" id="s1-w2" style="left:1110px">PASSA</div><div class="s1-u" id="s1-u2" style="left:1110px"></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#s1-tape-a", { rotation: -5, transformOrigin: "50% 50%" });
+    gsap.set("#s1-tape-b", { rotation: 4, transformOrigin: "50% 50%" });
+    tl.fromTo("#s1-tape-a", { x: -2800 }, { x: 0, duration: 0.7, ease: "expo.out" }, 0);
+    tl.fromTo("#s1-tape-b", { x: 2800 }, { x: 0, duration: 0.7, ease: "expo.out" }, 0.12);
+    [0, 1, 2, 3].forEach((i) => {
+      tl.fromTo("#s1-l" + i, { y: -760, rotation: i % 2 ? 14 : -14, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.75, ease: "back.out(1.9)" }, 0.35 + i * 0.13);
+    });
+    tl.fromTo("#s1-port", { scale: 0, rotation: -25 }, { scale: 1, rotation: 0, duration: 0.95, ease: "back.out(2.2)" }, 1.55);
+    tl.fromTo("#s1-ia", { scale: 0 }, { scale: 1, duration: 0.5, ease: "back.out(3)" }, 2.35);
+    tl.fromTo("#s1-sub", { x: -1500 }, { x: 0, duration: 0.6, ease: "power4.out" }, 2.1);
+    [0, 1, 2].forEach((i) => {
+      const t = 3.1 + i * 0.45;
+      tl.fromTo("#s1-w" + i, { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, t);
+      tl.fromTo("#s1-u" + i, { width: 0 }, { width: i === 1 ? 330 : 280, duration: 0.35, ease: "power3.out" }, t + 0.12);
+    });
+    tl.fromTo("#s1-ia", { rotation: 0 }, { rotation: 360, duration: 1.2, ease: "power2.inOut" }, 4.2);
+    tl.timeScale(0.92593);
+    tl.paused(false);
+    const master = gsap.timeline({ paused: true });
+    master.add(tl, 0);
+    window.__timelines["s1"] = master;
+  </script>
+</template>

@@ -1,0 +1,63 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #FFD60A; overflow: hidden; font-family: 'Inter', sans-serif; color: #111; }
+    .s5-lab { position: absolute; left: 120px; top: 90px; font-family: 'Archivo Black', sans-serif; font-size: 120px; line-height: 1; letter-spacing: -3px; }
+    .s5-tag { position: absolute; top: 300px; font-family: 'Archivo Black', sans-serif; font-size: 44px; letter-spacing: -1px; }
+    .s5-c { position: absolute; top: 370px; height: 450px; border: 10px solid #111; border-radius: 40px; box-shadow: 16px 16px 0 #111; display: flex; flex-direction: column; justify-content: center; padding: 0 56px; }
+    .s5-a { left: 120px; width: 760px; background: #fff; color: #111; }
+    .s5-b { left: 960px; width: 840px; background: #111; color: #FFD60A; box-shadow: 16px 16px 0 #fff; }
+    .s5-n { white-space: nowrap; font-family: 'Archivo Black', sans-serif; font-size: 230px; line-height: 1; letter-spacing: -8px; }
+    .s5-t { font-family: 'Archivo Black', sans-serif; font-size: 84px; line-height: 1.05; letter-spacing: -2px; }
+    .s5-s { font-weight: 800; font-size: 44px; line-height: 1.15; margin-top: 18px; }
+    #s5-src { position: absolute; left: 120px; top: 930px; font-weight: 700; font-size: 25px; width: 1700px; }
+    #s5-tape { position: absolute; left: -400px; top: 1022px; width: 2800px; height: 46px; background: repeating-linear-gradient(-45deg, #111 0 30px, #FFD60A 30px 60px); }
+  </style>
+  <div id="root" data-composition-id="s5" data-width="1920" data-height="1080">
+    <div class="s5-lab" id="s5-l0">PRIMEIRO CONTATO</div>
+    <div class="s5-tag" id="s5-ta0" style="left:120px">ANTES</div>
+    <div class="s5-c s5-a" id="s5-a0"><div class="s5-n">55<span style="font-size:100px;letter-spacing:0"> min</span></div><div class="s5-s">de espera pelo vendedor (mediana)</div></div>
+    <div class="s5-tag" id="s5-tb0" style="left:960px">COM A LARI</div>
+    <div class="s5-c s5-b" id="s5-b0"><div class="s5-n" id="s5-n0">0 s</div><div class="s5-s">para a Lari responder</div></div>
+
+    <div class="s5-lab" id="s5-l1">PREÇO</div>
+    <div class="s5-tag" id="s5-ta1" style="left:120px">ANTES</div>
+    <div class="s5-c s5-a" id="s5-a1"><div class="s5-t">Pedir ao vendedor</div><div class="s5-s">e esperar a resposta</div></div>
+    <div class="s5-tag" id="s5-tb1" style="left:960px">COM A LARI</div>
+    <div class="s5-c s5-b" id="s5-b1"><div class="s5-n" id="s5-n1">0%</div><div class="s5-s">das consultas de preço concluídas, na hora</div></div>
+
+    <div class="s5-lab" id="s5-l2">ORÇAMENTO</div>
+    <div class="s5-tag" id="s5-ta2" style="left:120px">ANTES</div>
+    <div class="s5-c s5-a" id="s5-a2"><div class="s5-t">Pedir ao vendedor</div><div class="s5-s">e esperar a conta</div></div>
+    <div class="s5-tag" id="s5-tb2" style="left:960px">COM A LARI</div>
+    <div class="s5-c s5-b" id="s5-b2"><div class="s5-n" id="s5-n2">0%</div><div class="s5-s">dos orçamentos sem erro</div></div>
+
+    <div id="s5-src">Antes: 866 conversas no Data Crazy, jan a ago/2026. Com a Lari: execuções de 06 a 13/11/2026.</div>
+    <div id="s5-tape"></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const T = [0.2, 3.9, 7.6];
+    const n0 = { v: 0 }, n1 = { v: 0 }, n2 = { v: 0 };
+    [0, 1, 2].forEach((i) => {
+      const t = T[i];
+      tl.fromTo("#s5-l" + i, { x: -900, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, t);
+      tl.fromTo("#s5-ta" + i, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t + 0.2);
+      tl.fromTo("#s5-a" + i, { x: -1100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "expo.out" }, t + 0.2);
+      tl.fromTo("#s5-tb" + i, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t + 1.0);
+      tl.fromTo("#s5-b" + i, { x: 1100, opacity: 0, scale: 0.9 }, { x: 0, opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.4)" }, t + 1.0);
+      if (i < 2) {
+        ["#s5-l", "#s5-ta", "#s5-a", "#s5-tb", "#s5-b"].forEach((p) => tl.to(p + i, { opacity: 0, x: p === "#s5-b" || p === "#s5-tb" ? 600 : -600, duration: 0.3, ease: "power2.in" }, t + 2.2));
+      }
+    });
+    tl.fromTo(n0, { v: 0 }, { v: 16.5, duration: 0.9, ease: "power3.out", onUpdate() { document.querySelector("#s5-n0").textContent = n0.v.toFixed(1).replace(".", ",") + " s"; } }, T[0] + 1.2);
+    tl.fromTo(n1, { v: 0 }, { v: 99.5, duration: 0.9, ease: "power3.out", onUpdate() { document.querySelector("#s5-n1").textContent = n1.v.toFixed(1).replace(".", ",") + "%"; } }, T[1] + 1.2);
+    tl.fromTo(n2, { v: 0 }, { v: 100, duration: 0.9, ease: "power3.out", onUpdate() { document.querySelector("#s5-n2").textContent = Math.round(n2.v) + "%"; } }, T[2] + 1.2);
+    tl.fromTo("#s5-src", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 9.0);
+    tl.fromTo("#s5-tape", { x: 0 }, { x: -340, duration: 10, ease: "none" }, 2);
+    tl.timeScale(0.92593);
+    tl.paused(false);
+    const master = gsap.timeline({ paused: true });
+    master.add(tl, 0);
+    window.__timelines["s5"] = master;
+  </script>
+</template>

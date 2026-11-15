@@ -1,0 +1,46 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #FFD60A; overflow: hidden; font-family: 'Inter', sans-serif; color: #111; }
+    .s3-h { position: absolute; left: 100px; font-family: 'Archivo Black', sans-serif; font-size: 132px; line-height: 1; letter-spacing: -2px; }
+    #s3-h3box { position: absolute; left: 100px; top: 540px; background: #111; width: 700px; height: 310px; }
+    #s3-h3 { color: #FFD60A; left: 135px; }
+    .s3-c { position: absolute; left: 980px; width: 840px; height: 170px; background: #fff; border: 6px solid #111; border-radius: 30px; box-shadow: 14px 14px 0 #111; display: flex; align-items: center; gap: 28px; padding: 0 36px; }
+    .s3-q { font-family: 'Archivo Black', sans-serif; font-size: 92px; letter-spacing: -3px; width: 190px; }
+    .s3-n { flex: 1; min-width: 0; font-weight: 800; font-size: 32px; line-height: 1.2; white-space: nowrap; }
+    .s3-p { font-family: 'Archivo Black', sans-serif; font-size: 44px; text-align: right; width: 230px; white-space: nowrap; }
+    #s3-tot { position: absolute; left: 980px; top: 770px; width: 840px; height: 200px; background: #111; color: #FFD60A; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; }
+    #s3-tot .l { font-weight: 800; font-size: 34px; line-height: 1.15; width: 220px; }
+    #s3-num { font-family: 'Archivo Black', sans-serif; font-size: 86px; letter-spacing: -3px; white-space: nowrap; }
+  </style>
+  <div id="root" data-composition-id="s3" data-width="1920" data-height="1080">
+    <div class="s3-h" id="s3-h0" style="top:130px">O CLIENTE</div>
+    <div class="s3-h" id="s3-h1" style="top:270px">ESQUECE.</div>
+    <div id="s3-h3box"></div>
+    <div class="s3-h" id="s3-h3" style="top:565px">A LARI<br />LEMBRA.</div>
+    <div class="s3-c" id="s3-c0" style="top:130px"><div class="s3-q">13×</div><div class="s3-n">Argamassa 15 kg<br />Quartzolit</div><div class="s3-p">R$ 22,50</div></div>
+    <div class="s3-c" id="s3-c1" style="top:340px"><div class="s3-q">4×</div><div class="s3-n">Rejunte bege 1 kg<br />Quartzolit</div><div class="s3-p">R$ 7,50</div></div>
+    <div class="s3-c" id="s3-c2" style="top:550px"><div class="s3-q">2×</div><div class="s3-n">Espaçador 2 mm<br />Cortag</div><div class="s3-p">R$ 3,10</div></div>
+    <div id="s3-tot"><div class="l">a mais no mesmo pedido</div><div id="s3-num">R$ 0,00</div></div>
+  </div>
+  <script>
+    const fmt = (v) => "R$ " + v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s3-h0", { x: -1000 }, { x: 0, duration: 0.6, ease: "expo.out" }, 0.2);
+    tl.fromTo("#s3-h1", { x: -1000 }, { x: 0, duration: 0.6, ease: "expo.out" }, 0.34);
+    tl.fromTo("#s3-h3box", { scaleX: 0, transformOrigin: "0% 50%" }, { scaleX: 1, duration: 0.5, ease: "power4.out" }, 2.6);
+    tl.fromTo("#s3-h3", { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power4.out" }, 2.9);
+    [0, 1, 2].forEach((i) => {
+      const side = i % 2 ? -1 : 1;
+      tl.fromTo("#s3-c" + i, { x: 1000, rotation: 9 * side, opacity: 0 }, { x: 0, rotation: i === 1 ? -1.5 : 1.2, opacity: 1, duration: 0.7, ease: "back.out(1.5)" }, 0.9 + i * 0.7);
+    });
+    tl.fromTo("#s3-tot", { y: 300, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "expo.out" }, 3.6);
+    const o = { v: 0 };
+    tl.fromTo(o, { v: 0 }, { v: 328.7, duration: 1.5, ease: "power3.out", onUpdate() { document.querySelector("#s3-num").textContent = fmt(o.v); } }, 3.9);
+    tl.fromTo("#s3-tot", { scale: 1 }, { scale: 1.04, duration: 0.2, ease: "power2.out", yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, 5.45);
+    tl.timeScale(0.92593);
+    tl.paused(false);
+    const master = gsap.timeline({ paused: true });
+    master.add(tl, 0);
+    window.__timelines["s3"] = master;
+  </script>
+</template>

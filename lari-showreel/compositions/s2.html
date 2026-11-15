@@ -1,0 +1,64 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #FFD60A; overflow: hidden; font-family: 'Inter', sans-serif; color: #111; }
+    .s2-h { position: absolute; left: 100px; font-family: 'Archivo Black', sans-serif; font-size: 138px; line-height: 1; letter-spacing: -2px; }
+    #s2-sub { position: absolute; left: 104px; top: 520px; font-weight: 800; font-size: 54px; line-height: 1.2; width: 760px; }
+    #s2-ent { position: absolute; left: 104px; top: 740px; font-weight: 800; font-size: 40px; }
+    .s2-c { position: absolute; top: 810px; height: 92px; padding: 0 34px; display: flex; align-items: center; font-family: 'Archivo Black', sans-serif; font-size: 42px; background: #111; color: #FFD60A; border-radius: 46px; box-shadow: 8px 8px 0 #fff; }
+    #s2-bar { position: absolute; left: 100px; top: 470px; height: 16px; background: #111; width: 0; }
+    .s2-b { position: absolute; border: 6px solid #111; border-radius: 40px; box-shadow: 14px 14px 0 #111; }
+    #s2-cli { left: 1010px; top: 150px; width: 790px; background: #fff; padding: 36px 44px; font-weight: 800; font-size: 46px; line-height: 1.2; }
+    #s2-dots { left: 1110px; top: 400px; width: 250px; height: 130px; background: #111; display: flex; align-items: center; justify-content: center; gap: 22px; }
+    .s2-d { width: 28px; height: 28px; border-radius: 50%; background: #FFD60A; }
+    #s2-lari { left: 1110px; top: 400px; width: 690px; background: #111; color: #FFD60A; padding: 30px 44px; }
+    #s2-lari .a { font-weight: 800; font-size: 38px; white-space: nowrap; }
+    #s2-lari .b { font-family: 'Archivo Black', sans-serif; font-size: 64px; letter-spacing: -2px; line-height: 1.15; white-space: nowrap; }
+    #s2-av { position: absolute; left: 960px; top: 450px; width: 128px; height: 128px; border-radius: 50%; border: 6px solid #111; overflow: hidden; background: #fff; box-shadow: 8px 8px 0 #111; }
+    #s2-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #s2-card { left: 960px; top: 700px; width: 840px; height: 260px; background: #fff; border-radius: 28px; }
+    #s2-card .t { position: absolute; left: 44px; top: 34px; font-weight: 800; font-size: 44px; }
+    #s2-card .n { position: absolute; left: 44px; top: 90px; font-family: 'Archivo Black', sans-serif; font-size: 128px; letter-spacing: -3px; }
+  </style>
+  <div id="root" data-composition-id="s2" data-width="1920" data-height="1080">
+    <div class="s2-h" id="s2-h0" style="top:130px">RESPONDE</div>
+    <div class="s2-h" id="s2-h1" style="top:270px">NA HORA.</div>
+    <div id="s2-bar"></div>
+    <div id="s2-sub">Preço, metragem e a conta feita, direto no WhatsApp ou Instagram.</div>
+    <div id="s2-ent">E ela entende:</div>
+    <div class="s2-c" id="s2-c0" style="left:104px">TEXTO</div>
+    <div class="s2-c" id="s2-c1" style="left:360px">ÁUDIO</div>
+    <div class="s2-c" id="s2-c2" style="left:620px">FOTO</div>
+    <div class="s2-b" id="s2-cli">Quanto fica o piso pra 23 m²?</div>
+    <div class="s2-b" id="s2-dots"><span class="s2-d" id="s2-d0"></span><span class="s2-d" id="s2-d1"></span><span class="s2-d" id="s2-d2"></span></div>
+    <div id="s2-av"><img src="assets/lari.png" alt="Lari" /></div>
+    <div class="s2-b" id="s2-lari"><div class="a">Piso Cerbras Aurora 46×46</div><div class="b">R$ 31,50 o m²</div></div>
+    <div class="s2-b" id="s2-card"><div class="t">23 m² × R$ 31,50</div><div class="n" id="s2-num">R$ 0,00</div></div>
+  </div>
+  <script>
+    const fmt = (v) => "R$ " + v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s2-h0", { x: -1100, rotation: -4 }, { x: 0, rotation: 0, duration: 0.7, ease: "expo.out" }, 0.25);
+    tl.fromTo("#s2-h1", { x: -1100, rotation: 4 }, { x: 0, rotation: 0, duration: 0.7, ease: "expo.out" }, 0.4);
+    tl.fromTo("#s2-bar", { width: 0 }, { width: 760, duration: 0.5, ease: "power4.out" }, 1.1);
+    tl.fromTo("#s2-sub", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power4.out" }, 1.4);
+    tl.fromTo("#s2-cli", { x: 900, opacity: 0, scale: 0.85 }, { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 0.9);
+    tl.fromTo("#s2-ent", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 2.0);
+    [0, 1, 2].forEach((i) => tl.fromTo("#s2-c" + i, { scale: 0, rotation: -12 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.4)" }, 2.3 + i * 0.25));
+    tl.fromTo("#s2-dots", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2.4)" }, 2.1);
+    tl.fromTo("#s2-av", { scale: 0 }, { scale: 1, duration: 0.45, ease: "back.out(2.4)" }, 2.1);
+    [0, 1, 2].forEach((i) => {
+      tl.fromTo("#s2-d" + i, { y: 0 }, { y: -26, duration: 0.2, ease: "power2.out", yoyo: true, repeat: 3 }, 2.25 + i * 0.1);
+    });
+    tl.fromTo("#s2-dots", { opacity: 1 }, { opacity: 0, duration: 0.01, immediateRender: false }, 3.35);
+    tl.fromTo("#s2-lari", { scaleX: 0, opacity: 0, transformOrigin: "0% 50%" }, { scaleX: 1, opacity: 1, duration: 0.45, ease: "back.out(1.4)" }, 3.35);
+    tl.fromTo("#s2-card", { y: 400, opacity: 0, rotation: 6 }, { y: 0, opacity: 1, rotation: 0, duration: 0.65, ease: "expo.out" }, 4.5);
+    const o = { v: 0 };
+    tl.fromTo(o, { v: 0 }, { v: 724.5, duration: 1.3, ease: "power3.out", onUpdate() { document.querySelector("#s2-num").textContent = fmt(o.v); } }, 4.8);
+    tl.fromTo("#s2-card", { scale: 1 }, { scale: 1.05, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, 6.15);
+    tl.timeScale(0.92593);
+    tl.paused(false);
+    const master = gsap.timeline({ paused: true });
+    master.add(tl, 0);
+    window.__timelines["s2"] = master;
+  </script>
+</template>
